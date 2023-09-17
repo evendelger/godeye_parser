@@ -10,12 +10,17 @@ class PhoneApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF364091)),
         textTheme: const TextTheme(
-          bodyMedium: TextStyle(
+          titleLarge: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
             color: Colors.white,
+          ),
+          titleMedium: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
           ),
         ),
         useMaterial3: true,
