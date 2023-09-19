@@ -1,8 +1,16 @@
+import 'dart:developer';
+import 'dart:isolate';
+
+import 'package:dio/dio.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phone_corrector/domain/api/api.dart';
 import 'package:phone_corrector/domain/data/regions_data.dart';
+import 'package:phone_corrector/repositories/phones_repository.dart';
+
+typedef ExampleModel = String;
 
 enum ParseType {
   name,
@@ -80,7 +88,7 @@ class _DeleteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      onPressed: () => print('удаление строки'),
+      onPressed: () => log('удаление строки'),
       padding: EdgeInsets.zero,
       child: const Icon(
         Icons.delete,
@@ -155,23 +163,22 @@ class _RowExperienceSearch extends StatelessWidget {
 
   final TextEditingController experienceController;
 
-  void _searchByExperience() => print('Поиск по опыту...');
+  void _searchByExperience() => log('Поиск по опыту...');
 
-  void _showExperienceInfo() =>
-      print('Показываю окно найденных телефонов по опыту...');
+  void _showExperienceInfo() => log('номера по стажу...');
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         _TextFieldExample(
-          width: 100,
+          width: 110,
           controller: experienceController,
           hintText: 'Стаж',
           parseType: ParseType.experience,
         ),
         _SearchButton(onPressed: _searchByExperience),
-        _ShowButton(onPressed: _showExperienceInfo),
+        const _ShowButton(model: 'Модель опыта'),
       ],
     );
   }
@@ -182,10 +189,10 @@ class _RowCitySearch extends StatelessWidget {
 
   final TextEditingController cityController;
 
-  void _searchByCity() => print('поиск по городу...');
+  void _searchByCity() => log('поиск по городу...');
 
   void _showCityInfo() =>
-      print('Показываю окно найденных телефонов по городу...');
+      log('Показываю окно найденных телефонов по городу...');
 
   @override
   Widget build(BuildContext context) {
@@ -198,22 +205,8 @@ class _RowCitySearch extends StatelessWidget {
           parseType: ParseType.city,
         ),
         _SearchButton(onPressed: _searchByCity),
-        _ShowButton(onPressed: _showCityInfo),
+        const _ShowButton(model: 'Модель города'),
       ],
-    );
-  }
-}
-
-class _CustomVerticalDivider extends StatelessWidget {
-  const _CustomVerticalDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 35,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      color: Colors.black54,
     );
   }
 }
@@ -248,10 +241,10 @@ class _RowIndex extends StatelessWidget {
 class _RowRegionSearch extends StatelessWidget {
   const _RowRegionSearch({super.key});
 
-  void _searchByRegion() => print('поиск по региону...');
+  void _searchByRegion() => log('поиск по региону...');
 
   void _showRegionInfo() =>
-      print('Показываю окно найденных телефонов по региону...');
+      log('Показываю окно найденных телефонов по региону...');
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +252,7 @@ class _RowRegionSearch extends StatelessWidget {
       children: [
         const _DropDownListWidget(),
         _SearchButton(onPressed: _searchByRegion),
-        _ShowButton(onPressed: _showRegionInfo),
+        const _ShowButton(model: 'Модель региона'),
       ],
     );
   }
@@ -403,7 +396,12 @@ class _SearchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
-      onPressed: onPressed,
+      onPressed: () async {
+        final repo =
+            PhonesDataRepository(apiClient: VoxlinkApiClient(dio: Dio()));
+        final model = await repo.getDataFromFile("Белова Надежда Анатольевна");
+        print(model.allPersonModels.length);
+      },
       padding: EdgeInsets.zero,
       child: const Icon(
         Icons.search,
@@ -414,15 +412,49 @@ class _SearchButton extends StatelessWidget {
 }
 
 class _ShowButton extends StatelessWidget {
-  const _ShowButton({super.key, required this.onPressed});
+  const _ShowButton({super.key, required this.model});
 
-  final VoidCallback onPressed;
+  final ExampleModel model;
+
+  Future<void> _showDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Center(
+              child: Text(
+            'Найденные телефоны',
+            style: Theme.of(context).textTheme.titleMedium,
+          )),
+          content: const SizedBox(
+            width: 500,
+            height: 500,
+            child: Center(child: Text('контент')),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => log('скопировал первые 3 телефона...'),
+              style: const ButtonStyle(
+                padding: MaterialStatePropertyAll(
+                  EdgeInsets.only(bottom: 13, left: 25, right: 25, top: 5),
+                ),
+              ),
+              child: const Text(
+                'Скопировать первые 3 номера',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      onPressed: onPressed,
+      onPressed: () async => _showDialog(context),
       child: const Icon(
         Icons.description,
         color: Colors.black,

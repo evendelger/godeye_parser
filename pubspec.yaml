@@ -17,6 +17,9 @@ dependencies:
   logger: ^2.0.2
   get_it: ^7.6.4
   dropdown_search: ^5.0.6
+  file_picker: ^5.5.0
+  html: ^0.15.4
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
