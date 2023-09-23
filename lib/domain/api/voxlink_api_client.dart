@@ -12,17 +12,20 @@ class VoxlinkApiClient implements AbstractApiClient {
   final Dio dio;
 
   @override
-  Future<bool?> checkRegion(String phone, String region) async {
+  Future<bool> checkRegion(String phone, String region) async {
     try {
       final response = await dio.get("$_apiBaseUrl$phone$_regionParam");
-      if (response.data.toString().contains(region)) {
+      if (response.data
+          .toString()
+          .toLowerCase()
+          .contains(region.trim().toLowerCase())) {
         return true;
       } else {
         return false;
       }
     } catch (e) {
       log(e.toString());
-      return null;
+      return false;
     }
   }
 }

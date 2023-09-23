@@ -1,15 +1,11 @@
+typedef MapList = List<Map<String, String>>;
+
 class PersonStateModel {
-  const PersonStateModel({required this.peopleData});
+  List<String>? regionPhones;
 
-  final List<DatePhoneModel> peopleData;
-}
+  MapList? cityRegionPhones;
+  MapList? cityPhones;
 
-class DatePhoneModel {
-  const DatePhoneModel({
-    required this.dateOfBirth,
-    this.correctedPhones,
-  });
-
-  final DateTime dateOfBirth;
-  final List<String>? correctedPhones;
+  MapList? experienceRegionPhones;
+  MapList? experiencePhones;
 }

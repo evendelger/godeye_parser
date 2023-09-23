@@ -1,49 +1,50 @@
-class PersonFileModel {
-  PersonFileModel({
+import 'package:equatable/equatable.dart';
+
+import 'package:phone_corrector/domain/models/models.dart';
+
+class PersonFileModel extends Equatable {
+  const PersonFileModel({
     required this.name,
-    required this.allPhones,
-    required this.allPersonModels,
+    this.allPhones,
+    this.allPersonModels,
+    required this.stateModel,
   });
 
   final String name;
-  final List<String> allPhones;
-  final List<SinglePersonModel> allPersonModels;
-}
+  final List<String>? allPhones;
+  final List<SinglePersonModel>? allPersonModels;
+  final PersonStateModel stateModel;
 
-class SinglePersonModel {
-  SinglePersonModel({String? phone, String? adress, DateTime? dateOfBirth}) {
-    addDate(dateOfBirth);
-    addPhone(phone);
-    addAdress(adress);
-  }
+  bool get fileWasExamined => allPhones != null && allPersonModels != null;
 
-  DateTime? dateOfBirth;
-  Set<String> adressesList = {};
-  Set<String> phoneNumbersList = {};
-
-  void addDate(DateTime? date) {
-    dateOfBirth ??= date;
-  }
-
-  void addPhone(String? phone) {
-    if (phone != null) {
-      phoneNumbersList.add(phone);
-    }
-  }
-
-  void addAdress(String? adress) {
-    if (adress != null) {
-      adressesList.add(adress);
-    }
+  factory PersonFileModel.empty({String? name}) {
+    return PersonFileModel(
+      name: '',
+      allPhones: null,
+      allPersonModels: null,
+      stateModel: PersonStateModel(),
+    );
   }
 
   @override
-  String toString() {
-    return """
------------------
-date - $dateOfBirth
-adresses - $adressesList
-phoneNumbersList - $phoneNumbersList
-""";
+  List<Object?> get props => [
+        name,
+        ...?allPhones,
+        ...?allPersonModels,
+        stateModel,
+      ];
+
+  PersonFileModel copyWith({
+    String? name,
+    List<String>? allPhones,
+    List<SinglePersonModel>? allPersonModels,
+    PersonStateModel? stateModel,
+  }) {
+    return PersonFileModel(
+      name: name ?? this.name,
+      allPhones: allPhones ?? this.allPhones,
+      allPersonModels: allPersonModels ?? this.allPersonModels,
+      stateModel: stateModel ?? this.stateModel,
+    );
   }
 }

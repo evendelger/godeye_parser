@@ -1,79 +1,148 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:phone_corrector/domain/provider_models/provider_models.dart';
+import 'package:phone_corrector/features/file_search/bloc/files_bloc.dart';
 import 'package:phone_corrector/features/file_search/widgets/widgets.dart';
 
-class MainPage extends StatelessWidget {
+const duration = Duration(milliseconds: 1000);
+
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  final _animatedListKey = GlobalKey<AnimatedListState>();
+
+  late final ScrollController _scrollController;
+
+  void _addToList(int count) {
+    final bloc = context.read<FilesBloc>();
+
+    bloc.add(AddItems(count: count));
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent + 100 * count,
+      duration: const Duration(milliseconds: 1200),
+      curve: Curves.fastOutSlowIn,
+    );
+    _animatedListKey.currentState!.insertAllItems(
+      bloc.state.models.length,
+      count,
+      duration: duration,
+    );
+    context.read<SearchingDataList>().addItems(count);
+  }
+
+  void _clearList() {
+    _animatedListKey.currentState!
+        .removeAllItems((context, animation) => const SizedBox.shrink());
+
+    context.read<FilesBloc>().add(const ClearList());
+    Future.microtask(
+      () => {
+        for (int i = 0; i < context.read<FilesBloc>().state.models.length; i++)
+          {
+            _animatedListKey.currentState!.insertItem(
+              i,
+              duration: duration,
+            )
+          }
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    _scrollController = ScrollController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
-          const Expanded(
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 15, right: 15, bottom: 10),
-              child: SingleChildScrollView(
-                child: _ListViewBuilder(),
+              padding: const EdgeInsets.only(
+                  top: 30, left: 15, right: 15, bottom: 10),
+              child: AnimatedList(
+                controller: _scrollController,
+                key: _animatedListKey,
+                initialItemCount: 5,
+                itemBuilder: (context, index, animation) {
+                  return AnimatedListItem(
+                    index: index,
+                    animation: animation,
+                  );
+                },
               ),
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.add_box,
-              size: 50,
-              color: Color(0xFF364091),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Spacer(),
+                _addIcon(count: 1),
+                const SizedBox(width: 30),
+                _addIcon(count: 10),
+                const Spacer(),
+                _resetIcon(),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _TitleOfList extends StatelessWidget {
-  const _TitleOfList({super.key});
+  FilledButton _resetIcon() {
+    return FilledButton(
+      onPressed: () => _clearList(),
+      style: const ButtonStyle(
+        padding: MaterialStatePropertyAll(EdgeInsets.all(15)),
+      ),
+      child: const Icon(Icons.restart_alt, size: 30),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.titleMedium;
-    // TODO: доработать внешний вид
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('№', style: textStyle),
-          const SizedBox(width: 190),
-          Text('ФИО', style: textStyle),
-          const SizedBox(width: 230),
-          Text('Поиск по региону', style: textStyle),
-          const SizedBox(width: 80),
-          Text('Поиск по городу', style: textStyle),
-          const SizedBox(width: 27),
-          Text('Поиск по стажу', style: textStyle),
-          const SizedBox(width: 33),
-          Text('Статус', style: textStyle),
-        ],
+  FilledButton _addIcon({required int count}) {
+    return FilledButton.icon(
+      onPressed: () => _addToList(count),
+      icon: const Icon(Icons.add, size: 30),
+      label: Text(
+        count == 10 ? '10' : '1 ',
+        style: const TextStyle(fontSize: 30),
       ),
     );
   }
 }
 
-class _ListViewBuilder extends StatelessWidget {
-  const _ListViewBuilder({
+class AnimatedListItem extends StatelessWidget {
+  const AnimatedListItem({
     super.key,
+    required this.animation,
+    required this.index,
   });
+
+  final Animation<double> animation;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: 5,
-      itemBuilder: (BuildContext context, int index) {
-        //if (index == 0) return const _TitleOfList();
-        return ListItem(index: index);
-      },
+    return FadeTransition(
+      opacity: animation,
+      child: ListItem(index: index),
     );
   }
 }

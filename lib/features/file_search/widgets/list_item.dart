@@ -1,19 +1,23 @@
-import 'dart:developer';
-import 'dart:isolate';
-
-import 'package:dio/dio.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phone_corrector/domain/api/api.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phone_corrector/domain/data/regions_data.dart';
-import 'package:phone_corrector/repositories/phones_repository.dart';
+import 'package:phone_corrector/domain/provider_models/provider_models.dart';
+import 'package:phone_corrector/features/file_search/bloc/files_bloc.dart';
+import 'package:phone_corrector/ui/widgets/widgets.dart';
 
 typedef ExampleModel = String;
 
 enum ParseType {
   name,
+  city,
+  experience,
+}
+
+enum SearchType {
+  region,
   city,
   experience,
 }
@@ -35,23 +39,24 @@ class ListItem extends StatefulWidget {
 }
 
 class _ListItemState extends State<ListItem> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _cityController;
-  late final TextEditingController _experienceController;
+  // 0 - name, 1 - city, 2 - experience
+  late final List<TextEditingController> controllers;
 
   @override
   void initState() {
-    _nameController = TextEditingController();
-    _cityController = TextEditingController();
-    _experienceController = TextEditingController();
+    controllers = [
+      TextEditingController(),
+      TextEditingController(),
+      TextEditingController(),
+    ];
     super.initState();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _cityController.dispose();
-    _experienceController.dispose();
+    for (var c in controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -65,35 +70,56 @@ class _ListItemState extends State<ListItem> {
           _RowIndex(index: widget.index),
           _TextFieldExample(
             width: 400,
-            controller: _nameController,
+            controller: controllers[0],
             hintText: 'Введите ФИО',
             parseType: ParseType.name,
+            index: widget.index,
           ),
           const SizedBox(width: 10),
-          const _RowRegionSearch(),
-          _RowCitySearch(cityController: _cityController),
-          _RowExperienceSearch(experienceController: _experienceController),
+          _RowRegionSearch(index: widget.index),
+          _RowCitySearch(
+            cityController: controllers[1],
+            index: widget.index,
+          ),
+          _RowExperienceSearch(
+            experienceController: controllers[2],
+            index: widget.index,
+          ),
           const _RowIconsStatus(),
           const SizedBox(width: 10),
-          const _DeleteButton(),
+          _ClearButton(controllers: controllers, index: widget.index),
         ],
       ),
     );
   }
 }
 
-class _DeleteButton extends StatelessWidget {
-  const _DeleteButton({super.key});
+class _ClearButton extends StatelessWidget {
+  const _ClearButton({
+    super.key,
+    required this.controllers,
+    required this.index,
+  });
+
+  final List<TextEditingController> controllers;
+  final int index;
+
+  void _clearItem(BuildContext context, int index) {
+    context.read<FilesBloc>().add(ClearItem(index: index));
+    for (var c in controllers) {
+      c.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
-      onPressed: () => log('удаление строки'),
+    return IconButton(
+      onPressed: () => _clearItem(context, index),
       padding: EdgeInsets.zero,
-      child: const Icon(
-        Icons.delete,
+      icon: Icon(
+        Icons.clear_all,
         size: 35,
-        color: Colors.red,
+        color: Colors.red.shade400,
       ),
     );
   }
@@ -128,8 +154,8 @@ class _RowIconsStatus extends StatelessWidget {
 class _SingleIconStatus extends StatelessWidget {
   const _SingleIconStatus({
     super.key,
-    this.searchStatus = SearchStatus.waiting,
     required this.icon,
+    this.searchStatus = SearchStatus.waiting,
   });
 
   final IconData icon;
@@ -159,13 +185,14 @@ class _SingleIconStatus extends StatelessWidget {
 }
 
 class _RowExperienceSearch extends StatelessWidget {
-  const _RowExperienceSearch({super.key, required this.experienceController});
+  const _RowExperienceSearch({
+    super.key,
+    required this.experienceController,
+    required this.index,
+  });
 
   final TextEditingController experienceController;
-
-  void _searchByExperience() => log('Поиск по опыту...');
-
-  void _showExperienceInfo() => log('номера по стажу...');
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -176,23 +203,24 @@ class _RowExperienceSearch extends StatelessWidget {
           controller: experienceController,
           hintText: 'Стаж',
           parseType: ParseType.experience,
+          index: index,
         ),
-        _SearchButton(onPressed: _searchByExperience),
-        const _ShowButton(model: 'Модель опыта'),
+        _SearchButton(searchType: SearchType.experience, index: index),
+        _ShowButton(searchType: SearchType.experience, index: index),
       ],
     );
   }
 }
 
 class _RowCitySearch extends StatelessWidget {
-  const _RowCitySearch({super.key, required this.cityController});
+  const _RowCitySearch({
+    super.key,
+    required this.cityController,
+    required this.index,
+  });
 
   final TextEditingController cityController;
-
-  void _searchByCity() => log('поиск по городу...');
-
-  void _showCityInfo() =>
-      log('Показываю окно найденных телефонов по городу...');
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -203,9 +231,10 @@ class _RowCitySearch extends StatelessWidget {
           controller: cityController,
           hintText: 'Введите город',
           parseType: ParseType.city,
+          index: index,
         ),
-        _SearchButton(onPressed: _searchByCity),
-        const _ShowButton(model: 'Модель города'),
+        _SearchButton(searchType: SearchType.city, index: index),
+        _ShowButton(searchType: SearchType.city, index: index),
       ],
     );
   }
@@ -239,27 +268,35 @@ class _RowIndex extends StatelessWidget {
 }
 
 class _RowRegionSearch extends StatelessWidget {
-  const _RowRegionSearch({super.key});
+  const _RowRegionSearch({super.key, required this.index});
 
-  void _searchByRegion() => log('поиск по региону...');
-
-  void _showRegionInfo() =>
-      log('Показываю окно найденных телефонов по региону...');
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const _DropDownListWidget(),
-        _SearchButton(onPressed: _searchByRegion),
-        const _ShowButton(model: 'Модель региона'),
+        _DropDownListWidget(index: index),
+        _SearchButton(searchType: SearchType.region, index: index),
+        _ShowButton(searchType: SearchType.region, index: index),
       ],
     );
   }
 }
 
 class _DropDownListWidget extends StatelessWidget {
-  const _DropDownListWidget({super.key});
+  const _DropDownListWidget({super.key, required this.index});
+
+  final int index;
+
+  void _saveSelectedRegion(BuildContext context, String? value) {
+    if (value != null) {
+      context
+          .read<SearchingDataList>()
+          .listOfControllers[index]
+          .regionToSearch = value;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -297,6 +334,7 @@ class _DropDownListWidget extends StatelessWidget {
             ),
           ),
         ),
+        onChanged: (value) => _saveSelectedRegion(context, value),
         selectedItem: null,
       ),
     );
@@ -310,14 +348,16 @@ class _TextFieldExample extends StatelessWidget {
     required this.controller,
     required this.hintText,
     required this.parseType,
+    required this.index,
   });
 
   final double width;
   final String hintText;
   final TextEditingController controller;
   final ParseType parseType;
+  final int index;
 
-  Future<void> _getAndFormatText() async {
+  Future<void> _getAndFormatText(BuildContext context) async {
     final cdata = await Clipboard.getData(Clipboard.kTextPlain);
     if (cdata == null || cdata.text == null) return;
 
@@ -326,6 +366,10 @@ class _TextFieldExample extends StatelessWidget {
         {
           final text = cdata.text!.trim();
           controller.text = text;
+
+          if (context.mounted) {
+            _saveControllerValue(context, text);
+          }
         }
       case ParseType.city:
         {
@@ -335,6 +379,10 @@ class _TextFieldExample extends StatelessWidget {
               ? trimmedText.substring(0, indexOfSpace)
               : trimmedText;
           controller.text = text;
+
+          if (context.mounted) {
+            _saveControllerValue(context, text);
+          }
         }
       case ParseType.experience:
         {
@@ -348,6 +396,29 @@ class _TextFieldExample extends StatelessWidget {
           controller.text = parsedText.toString().isNotEmpty
               ? parsedText.toString()
               : controller.text;
+
+          if (context.mounted) {
+            _saveControllerValue(context, parsedText.toString());
+          }
+        }
+    }
+  }
+
+  void _saveControllerValue(BuildContext context, String value) {
+    final controllersModel =
+        context.read<SearchingDataList>().listOfControllers[index];
+    switch (parseType) {
+      case ParseType.name:
+        {
+          controllersModel.nameControllerText = controller.text;
+        }
+      case ParseType.city:
+        {
+          controllersModel.cityControllerText = controller.text;
+        }
+      case ParseType.experience:
+        {
+          controllersModel.experienceControllerText = controller.text;
         }
     }
   }
@@ -358,6 +429,7 @@ class _TextFieldExample extends StatelessWidget {
       width: width,
       child: TextField(
         controller: controller,
+        onChanged: (value) => _saveControllerValue(context, value),
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -367,7 +439,7 @@ class _TextFieldExample extends StatelessWidget {
           hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
           isDense: true,
           suffixIcon: CupertinoButton(
-            onPressed: _getAndFormatText,
+            onPressed: () => _getAndFormatText(context),
             child: const Icon(Icons.paste, size: 20),
           ),
           contentPadding:
@@ -389,21 +461,42 @@ class _TextFieldExample extends StatelessWidget {
 }
 
 class _SearchButton extends StatelessWidget {
-  const _SearchButton({super.key, required this.onPressed});
+  const _SearchButton(
+      {super.key, required this.searchType, required this.index});
 
-  final VoidCallback onPressed;
+  final SearchType searchType;
+  final int index;
+
+  void _search(BuildContext context) {
+    final itemModel =
+        context.read<SearchingDataList>().listOfControllers[index];
+    if (itemModel.regionToSearch.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(messageSnackbar);
+    }
+
+    final bloc = context.read<FilesBloc>();
+
+    switch (searchType) {
+      case SearchType.region:
+        bloc.add(SearchByRegion(
+          index: index,
+          name: itemModel.nameControllerText,
+          region: itemModel.regionToSearch,
+        ));
+
+      case SearchType.city:
+      //  bloc.add(event);
+      case SearchType.experience:
+      //  bloc.add(event);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
-      onPressed: () async {
-        final repo =
-            PhonesDataRepository(apiClient: VoxlinkApiClient(dio: Dio()));
-        final model = await repo.getDataFromFile("Белова Надежда Анатольевна");
-        print(model.allPersonModels.length);
-      },
+    return IconButton(
+      onPressed: () => _search(context),
       padding: EdgeInsets.zero,
-      child: const Icon(
+      icon: const Icon(
         Icons.search,
         color: Colors.black,
       ),
@@ -412,11 +505,18 @@ class _SearchButton extends StatelessWidget {
 }
 
 class _ShowButton extends StatelessWidget {
-  const _ShowButton({super.key, required this.model});
+  const _ShowButton({
+    super.key,
+    required this.searchType,
+    required this.index,
+  });
 
-  final ExampleModel model;
+  final SearchType searchType;
+  final int index;
 
   Future<void> _showDialog(BuildContext context) async {
+    final stateModel = context.read<FilesBloc>().state.models[index].stateModel;
+
     await showDialog(
       context: context,
       builder: (context) {
@@ -426,25 +526,13 @@ class _ShowButton extends StatelessWidget {
             'Найденные телефоны',
             style: Theme.of(context).textTheme.titleMedium,
           )),
-          content: const SizedBox(
-            width: 500,
-            height: 500,
-            child: Center(child: Text('контент')),
+          content: SizedBox(
+            width: 600,
+            height: 600,
+            child: searchType == SearchType.region
+                ? Center(child: Text(stateModel.regionPhones.toString()))
+                : null,
           ),
-          actions: [
-            FilledButton(
-              onPressed: () => log('скопировал первые 3 телефона...'),
-              style: const ButtonStyle(
-                padding: MaterialStatePropertyAll(
-                  EdgeInsets.only(bottom: 13, left: 25, right: 25, top: 5),
-                ),
-              ),
-              child: const Text(
-                'Скопировать первые 3 номера',
-                style: TextStyle(fontSize: 20),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -452,10 +540,10 @@ class _ShowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoButton(
+    return IconButton(
       padding: EdgeInsets.zero,
       onPressed: () async => _showDialog(context),
-      child: const Icon(
+      icon: const Icon(
         Icons.description,
         color: Colors.black,
       ),

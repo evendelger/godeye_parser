@@ -1,5 +1,5 @@
-class BlockInfoModel {
-  BlockInfoModel({
+class BlockFileInfoModel {
+  BlockFileInfoModel({
     this.dateOfBirth,
     this.phone,
     this.adress,

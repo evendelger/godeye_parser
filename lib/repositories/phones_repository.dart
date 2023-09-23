@@ -1,34 +1,24 @@
 import 'dart:developer';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 
 import 'package:phone_corrector/domain/api/api.dart';
+import 'package:phone_corrector/domain/data/data_provider/abstract_Data_provider.dart';
 import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/repositories/abstract_phone_repository.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
-  const PhonesDataRepository({required this.apiClient});
+  const PhonesDataRepository({
+    required this.apiClient,
+    required this.dataProvider,
+  });
 
   final AbstractApiClient apiClient;
+  final AbstractDataProvider dataProvider;
 
-  // TODO: добавить выбор папки при запуске программы, т.е. через hive сохранять это
-  static const filesPath = r"C:\Users\even\Downloads\Telegram Desktop\";
   static final datePattern = RegExp(r'\d{2}\.\d{2}\.\d{4}');
-
-  Future<String> _getDirectory(String name) async {
-    final firstDir = "$filesPath$name.html";
-    final secondDir = "$filesPath${name.replaceAll(' ', '_')}.html";
-
-    if (await File(firstDir).exists()) {
-      return firstDir;
-    } else if (await File(secondDir).exists()) {
-      return secondDir;
-    }
-    return '';
-  }
 
   List<String> _getPhonesList(Element blockInfoList) {
     final phoneList = <String>[];
@@ -53,7 +43,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     blocksDataList.sublist(2).forEach((block) {
       final contentList = block.children[0].children[1];
 
-      var blockModel = BlockInfoModel();
+      var blockModel = BlockFileInfoModel();
       for (var dataMap in contentList.children) {
         final title = dataMap.children[0].text;
 
@@ -133,20 +123,9 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   }
 
   Future<PersonFileModel> _exploreFile(String name) async {
-    final model = PersonFileModel(
-      name: name,
-      allPersonModels: [],
-      allPhones: [],
-    );
-    final file = File(await _getDirectory(name));
-    if (file.path.isEmpty) {
-      // TODO: доработать обработку ошибок
-      // выбросить кастомную ошибку
-      log("не удается найти файл");
-      return model;
-    }
+    final data = await dataProvider.readFile(name);
+    if (data.isEmpty) return PersonFileModel.empty(name: name);
 
-    final data = await file.readAsString();
     final document = parser.parse(data);
 
     final blocksDataList =
@@ -157,14 +136,32 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     final allPhonesList = _getPhonesList(blockSummary!);
     final modelsAfterSearching = _collectModels(blocksDataList);
 
-    model.allPersonModels.addAll(modelsAfterSearching);
-    model.allPhones.addAll(allPhonesList);
-
-    return model;
+    return PersonFileModel(
+      name: name,
+      allPhones: allPhonesList,
+      allPersonModels: modelsAfterSearching,
+      stateModel: PersonStateModel(),
+    );
   }
 
   @override
   Future<PersonFileModel> getDataFromFile(String name) async {
     return await compute(_exploreFile, name);
+  }
+
+  @override
+  Future<List<String>> searchByRegion(
+    PersonFileModel model,
+    String region,
+  ) async {
+    final correctPhones = <String>[];
+
+    for (int i = 0; i < model.allPhones!.length; i++) {
+      final isCorrect =
+          await apiClient.checkRegion(model.allPhones![i], region);
+      if (isCorrect) correctPhones.add(model.allPhones![i]);
+    }
+
+    return correctPhones;
   }
 }
