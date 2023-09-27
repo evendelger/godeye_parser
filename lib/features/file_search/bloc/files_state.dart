@@ -1,6 +1,6 @@
 part of 'files_bloc.dart';
 
-class FilesState extends Equatable {
+class FilesState {
   const FilesState({required this.models});
 
   final List<PersonFileModel> models;
@@ -15,6 +15,11 @@ class FilesState extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => [...models];
+  FilesState copyWith({
+    List<PersonFileModel>? models,
+  }) {
+    return FilesState(
+      models: models ?? this.models,
+    );
+  }
 }

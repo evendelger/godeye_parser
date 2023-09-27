@@ -9,24 +9,24 @@ class FileSearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          const SideBar(),
-          MultiProvider(
-            providers: [
-              Provider<FilesBloc>(
-                create: (_) => FilesBloc(),
-                lazy: false,
-              ),
-              Provider<SearchingDataList>(
-                create: (_) => SearchingDataList.init(),
-                lazy: false,
-              ),
-            ],
-            child: const MainPage(),
-          ),
-        ],
+    return MultiProvider(
+      providers: [
+        Provider<FilesBloc>(
+          create: (_) => FilesBloc(),
+          lazy: false,
+        ),
+        Provider<SearchingDataList>(
+          create: (_) => SearchingDataList.init(),
+          lazy: false,
+        ),
+      ],
+      child: const Scaffold(
+        body: Row(
+          children: [
+            SideBar(),
+            MainPage(),
+          ],
+        ),
       ),
     );
   }

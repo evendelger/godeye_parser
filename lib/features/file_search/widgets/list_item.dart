@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phone_corrector/domain/data/regions_data.dart';
+import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/domain/provider_models/provider_models.dart';
 import 'package:phone_corrector/features/file_search/bloc/files_bloc.dart';
-import 'package:phone_corrector/ui/widgets/widgets.dart';
-
-typedef ExampleModel = String;
 
 enum ParseType {
   name,
@@ -20,13 +18,6 @@ enum SearchType {
   region,
   city,
   experience,
-}
-
-enum SearchStatus {
-  waiting,
-  inProgress,
-  success,
-  error,
 }
 
 class ListItem extends StatefulWidget {
@@ -85,7 +76,7 @@ class _ListItemState extends State<ListItem> {
             experienceController: controllers[2],
             index: widget.index,
           ),
-          const _RowIconsStatus(),
+          _RowIconsStatus(index: widget.index),
           const SizedBox(width: 10),
           _ClearButton(controllers: controllers, index: widget.index),
         ],
@@ -126,7 +117,12 @@ class _ClearButton extends StatelessWidget {
 }
 
 class _RowIconsStatus extends StatelessWidget {
-  const _RowIconsStatus({super.key});
+  const _RowIconsStatus({
+    super.key,
+    required this.index,
+  });
+
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -140,12 +136,26 @@ class _RowIconsStatus extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.all(5),
-      child: const Row(
-        children: [
-          _SingleIconStatus(icon: Icons.person),
-          _SingleIconStatus(icon: Icons.location_city),
-          _SingleIconStatus(icon: Icons.work),
-        ],
+      child: BlocBuilder<FilesBloc, FilesState>(
+        builder: (context, state) {
+          final stateModel = state.models[index].stateModel;
+          return Row(
+            children: [
+              _SingleIconStatus(
+                icon: Icons.person,
+                searchStatus: stateModel.regionStatus,
+              ),
+              _SingleIconStatus(
+                icon: Icons.location_city,
+                searchStatus: stateModel.cityStatus,
+              ),
+              _SingleIconStatus(
+                icon: Icons.work,
+                searchStatus: stateModel.experienceStatus,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -155,7 +165,7 @@ class _SingleIconStatus extends StatelessWidget {
   const _SingleIconStatus({
     super.key,
     required this.icon,
-    this.searchStatus = SearchStatus.waiting,
+    required this.searchStatus,
   });
 
   final IconData icon;
@@ -418,7 +428,11 @@ class _TextFieldExample extends StatelessWidget {
         }
       case ParseType.experience:
         {
-          controllersModel.experienceControllerText = controller.text;
+          final parsedValue =
+              int.tryParse(controllersModel.experienceControllerText);
+          if (parsedValue != null) {
+            controllersModel.experienceControllerText = controller.text;
+          }
         }
     }
   }
@@ -470,11 +484,28 @@ class _SearchButton extends StatelessWidget {
   void _search(BuildContext context) {
     final itemModel =
         context.read<SearchingDataList>().listOfControllers[index];
-    if (itemModel.regionToSearch.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(messageSnackbar);
-    }
-
     final bloc = context.read<FilesBloc>();
+
+    switch (searchType) {
+      case SearchType.region:
+        {
+          if (itemModel.regionToSearch.isEmpty ||
+              bloc.state.models[index].stateModel.regionStatus ==
+                  SearchStatus.inProgress) return;
+        }
+      case SearchType.city:
+        {
+          if (itemModel.cityControllerText.isEmpty ||
+              bloc.state.models[index].stateModel.cityStatus ==
+                  SearchStatus.inProgress) return;
+        }
+      case SearchType.experience:
+        {
+          if (itemModel.experienceControllerText.isEmpty ||
+              bloc.state.models[index].stateModel.experienceStatus ==
+                  SearchStatus.inProgress) return;
+        }
+    }
 
     switch (searchType) {
       case SearchType.region:
@@ -483,11 +514,18 @@ class _SearchButton extends StatelessWidget {
           name: itemModel.nameControllerText,
           region: itemModel.regionToSearch,
         ));
-
       case SearchType.city:
-      //  bloc.add(event);
+        bloc.add(SearchByCity(
+          index: index,
+          name: itemModel.nameControllerText,
+          city: itemModel.cityControllerText,
+        ));
       case SearchType.experience:
-      //  bloc.add(event);
+        bloc.add(SearchByExperience(
+          index: index,
+          name: itemModel.nameControllerText,
+          experience: itemModel.experienceControllerText,
+        ));
     }
   }
 
@@ -514,25 +552,15 @@ class _ShowButton extends StatelessWidget {
   final SearchType searchType;
   final int index;
 
-  Future<void> _showDialog(BuildContext context) async {
-    final stateModel = context.read<FilesBloc>().state.models[index].stateModel;
+  void _showDialog(BuildContext context) {
+    final bloc = context.read<FilesBloc>();
 
-    await showDialog(
+    showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Center(
-              child: Text(
-            'Найденные телефоны',
-            style: Theme.of(context).textTheme.titleMedium,
-          )),
-          content: SizedBox(
-            width: 600,
-            height: 600,
-            child: searchType == SearchType.region
-                ? Center(child: Text(stateModel.regionPhones.toString()))
-                : null,
-          ),
+      builder: (_) {
+        return BlocProvider<FilesBloc>.value(
+          value: bloc,
+          child: _AlertDialog(searchType: searchType, index: index),
         );
       },
     );
@@ -542,11 +570,400 @@ class _ShowButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       padding: EdgeInsets.zero,
-      onPressed: () async => _showDialog(context),
+      onPressed: () => _showDialog(context),
       icon: const Icon(
         Icons.description,
         color: Colors.black,
       ),
+    );
+  }
+}
+
+class _AlertDialog extends StatelessWidget {
+  const _AlertDialog({
+    super.key,
+    required this.searchType,
+    required this.index,
+  });
+
+  final int index;
+  final SearchType searchType;
+
+  Widget _switchSearchType(PersonFileModel model) {
+    switch (searchType) {
+      case SearchType.region:
+        return _switchRegionStatus(model);
+      case SearchType.city:
+        return _switchCityStatus(model);
+      case SearchType.experience:
+        return _switchExperienceStatus(model);
+    }
+  }
+
+  Widget _switchRegionStatus(PersonFileModel model) {
+    switch (model.stateModel.regionStatus) {
+      case SearchStatus.waiting:
+        return _textMessage('Начните поиск');
+      case SearchStatus.inProgress:
+        return _textMessage('Идет поиск...');
+      case SearchStatus.success:
+        return _regionInfo(model);
+      case SearchStatus.error:
+        return _textMessage('Ошибка, повторите попытку');
+    }
+  }
+
+  Widget _switchCityStatus(PersonFileModel model) {
+    switch (model.stateModel.cityStatus) {
+      case SearchStatus.waiting:
+        return _textMessage('Начните поиск');
+      case SearchStatus.inProgress:
+        return _textMessage('Идет поиск...');
+      case SearchStatus.success:
+        return _cityInfo(model);
+      case SearchStatus.error:
+        return _textMessage('Ошибка, повторите попытку');
+    }
+  }
+
+  Widget _switchExperienceStatus(PersonFileModel model) {
+    switch (model.stateModel.experienceStatus) {
+      case SearchStatus.waiting:
+        return _textMessage('Начните поиск');
+      case SearchStatus.inProgress:
+        return _textMessage('Идет поиск...');
+      case SearchStatus.success:
+        return _experienceInfo(model);
+      case SearchStatus.error:
+        return _textMessage('Ошибка, повторите попытку');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return BlocBuilder<FilesBloc, FilesState>(
+      builder: (context, state) {
+        return AlertDialog(
+          title: Column(
+            children: [
+              Text(
+                'Найденные телефоны',
+                style: theme.textTheme.titleMedium,
+              ),
+              state.models[index].name.isEmpty
+                  ? const SizedBox.shrink()
+                  : Text(
+                      state.models[index].name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.primaryColor.withOpacity(0.9),
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+            ],
+          ),
+          content: SizedBox(
+            height: 600,
+            width: 600,
+            child: _switchSearchType(state.models[index]),
+          ),
+        );
+      },
+    );
+  }
+
+  Center _textMessage(String text) {
+    return Center(
+        child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w400,
+      ),
+    ));
+  }
+
+  ListView _regionInfo(PersonFileModel model) {
+    return ListView(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _summaryInfoBlock(
+              'Регион',
+              model.stateModel.regionPhones!,
+              Colors.green.shade700,
+            ),
+            _summaryInfoBlock(
+              'Всего',
+              model.allPhones!,
+              Colors.black87,
+            ),
+          ],
+        ),
+        const SizedBox(height: 30),
+        _allInfoBlock(
+          'Регион',
+          model.stateModel.regionPhones!,
+          Colors.green.shade700,
+        ),
+        const SizedBox(height: 10),
+        _allInfoBlock(
+          'Всего',
+          model.allPhones!,
+          Colors.black87,
+        ),
+      ],
+    );
+  }
+
+  ListView _cityInfo(PersonFileModel model) {
+    return ListView(
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 30),
+            _summaryInfoBlock(
+              'Город и Регион',
+              model.stateModel.cityRegionPhones!,
+              Colors.green.shade700,
+            ),
+            const SizedBox(width: 30),
+            _summaryInfoBlock(
+              'Город',
+              model.stateModel.cityPhones!,
+              Colors.pink,
+            ),
+            const SizedBox(width: 100),
+            _summaryInfoBlock(
+              'Всего',
+              model.allPhones!,
+              Colors.black87,
+            ),
+          ],
+        ),
+        const SizedBox(height: 30),
+        _allInfoBlock(
+          'Город и регион',
+          model.stateModel.cityRegionPhones!,
+          Colors.green.shade700,
+        ),
+        const SizedBox(height: 10),
+        _allInfoBlock(
+          'Город',
+          model.stateModel.cityPhones!,
+          Colors.pink,
+        ),
+        const SizedBox(height: 10),
+        _allInfoBlock(
+          'Всего',
+          model.allPhones!,
+          Colors.black87,
+        ),
+      ],
+    );
+  }
+
+  ListView _experienceInfo(PersonFileModel model) {
+    return ListView(
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 30),
+            _summaryInfoBlock(
+              'Стаж и Регион',
+              model.stateModel.experienceRegionPhones!
+                  .map((e) => e.values.expand((x) => x))
+                  .expand((x) => x)
+                  .toList(),
+              Colors.green.shade700,
+            ),
+            const SizedBox(width: 30),
+            _summaryInfoBlock(
+              'Стаж',
+              model.stateModel.experiencePhones!
+                  .map((e) => e.values.expand((x) => x))
+                  .expand((x) => x)
+                  .toList(),
+              Colors.pink,
+            ),
+            const SizedBox(width: 100),
+            _summaryInfoBlock(
+              'Всего',
+              model.allPhones!,
+              Colors.black87,
+            ),
+          ],
+        ),
+        const SizedBox(height: 30),
+        _allInfoBlock(
+          'Стаж и регион',
+          model.stateModel.experienceRegionPhones!,
+          Colors.green.shade700,
+          model.stateModel.experienceToSearch,
+        ),
+        const SizedBox(height: 10),
+        _allInfoBlock(
+          'Стаж',
+          model.stateModel.experiencePhones!,
+          Colors.pink,
+          model.stateModel.experienceToSearch,
+        ),
+        const SizedBox(height: 10),
+        _allInfoBlock('Всего', model.allPhones!, Colors.black87),
+      ],
+    );
+  }
+
+  int parseSubstring(String line) => int.parse(line.substring(6, 10));
+
+  Column _allInfoBlock(
+    String title,
+    List content,
+    Color color, [
+    String? experienceToSearch,
+  ]) {
+    final textStyle = TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w700,
+      color: color,
+    );
+
+    InkWell phoneCopyableText(String phone, [Color? newColor]) {
+      return InkWell(
+        onTap: () async => await Clipboard.setData(ClipboardData(text: phone)),
+        overlayColor: MaterialStatePropertyAll(color.withOpacity(0.07)),
+        child: Text(
+          phone,
+          style: textStyle.copyWith(color: newColor),
+        ),
+      );
+    }
+
+    List<Widget> listOfPhones([List? newContent, Color? newColor]) {
+      if (newContent != null) {
+        return List<Widget>.generate(newContent.length,
+            (i) => phoneCopyableText(newContent[i], newColor));
+      }
+      return List<Widget>.generate(
+          content.length, (i) => phoneCopyableText(content[i]));
+    }
+
+    const greenColorsMap = {
+      0: Color(0xFF388E3C),
+      1: Color(0xFF317E35),
+      2: Color(0xFF2A6D2D),
+      3: Color(0xFF245D26),
+      4: Color(0xFF1D4D1F),
+      5: Color(0xFF163C17),
+    };
+
+    const redColorsMap = {
+      0: Color(0xFFE91E63),
+      1: Color(0xFFD51C5B),
+      2: Color(0xFFC11952),
+      3: Color(0xFFAE174A),
+      4: Color(0xFF9A1542),
+      5: Color(0xFF861239),
+    };
+
+    List<Row> listOfMappedPhones() {
+      const int trueDiff = 5;
+      final rowMap = <String, List<String>>{};
+
+      for (var element in (content as List<Map<String, List<String>>>)) {
+        final date = element.keys.first;
+        final difference = (DateTime.now().year -
+                (parseSubstring(date) + int.parse(experienceToSearch!) + 23))
+            .abs();
+        if (difference <= trueDiff) {
+          rowMap[date] = element.values.toList()[0];
+        }
+      }
+      if (rowMap.isEmpty) return List<Row>.empty();
+
+      return List<Row>.generate(rowMap.length, (index) {
+        final key = rowMap.keys.toList()[index];
+        final values = rowMap.values.toList()[index];
+        final diff = (DateTime.now().year -
+                (parseSubstring(key) + int.parse(experienceToSearch!) + 23))
+            .abs();
+        final mappedColor = color == Colors.green.shade700
+            ? greenColorsMap[diff]
+            : redColorsMap[diff];
+
+        return Row(
+          children: [
+            Text(
+              '$key - ',
+              style: textStyle.copyWith(color: mappedColor),
+            ),
+            Wrap(
+              spacing: 10,
+              children: listOfPhones(values, mappedColor),
+            ),
+          ],
+        );
+      });
+    }
+
+    return Column(
+      children: [
+        Text(
+          title,
+          style: textStyle,
+        ),
+        const SizedBox(height: 10),
+        content.isEmpty
+            ? Text(
+                'Пусто',
+                style: textStyle.copyWith(fontSize: 14),
+              )
+            : Wrap(
+                spacing: 10,
+                children: experienceToSearch != null
+                    ? listOfMappedPhones()
+                    : listOfPhones(),
+              ),
+      ],
+    );
+  }
+
+  Column _summaryInfoBlock(String title, List list, Color color) {
+    Future<void> copyText() async {
+      final length = list.length >= 3 ? 3 : list.length;
+      final toCopy = [];
+
+      for (int i = 0; i < length; i++) {
+        toCopy.add(list[i]);
+      }
+      await Clipboard.setData(ClipboardData(text: toCopy.join('\t')));
+    }
+
+    final textStyle = TextStyle(
+      fontSize: 26,
+      fontWeight: FontWeight.w700,
+      color: color,
+    );
+
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: textStyle,
+        ),
+        Text(
+          list.length.toString(),
+          style: textStyle.copyWith(fontSize: 44),
+        ),
+        FilledButton(
+          onPressed: copyText,
+          child: const Icon(Icons.copy),
+        ),
+      ],
     );
   }
 }

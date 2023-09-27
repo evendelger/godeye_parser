@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:phone_corrector/domain/api/api.dart';
 import 'package:phone_corrector/domain/data/data_provider/abstract_Data_provider.dart';
 import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/repositories/abstract_phone_repository.dart';
+import 'package:phone_corrector/repositories/abstract_phones_repository.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
   const PhonesDataRepository({
@@ -18,6 +18,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   final AbstractApiClient apiClient;
   final AbstractDataProvider dataProvider;
 
+  static const differenceInYears = 5;
   static final datePattern = RegExp(r'\d{2}\.\d{2}\.\d{4}');
 
   List<String> _getPhonesList(Element blockInfoList) {
@@ -50,7 +51,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
         if (title == "День рождения:") {
           final data = dataMap.children[1].text.trim();
           if (!datePattern.hasMatch(data)) continue;
-          blockModel.dateOfBirth ??= DateFormat('dd.mm.yyyy').parse(data);
+          blockModel.dateOfBirth ??= DateFormat('dd.MM.yyyy').parse(data);
         } else if (title == "Телефон:") {
           final data = dataMap.children[1].text.trim();
           if (data.length != 11 || !data.startsWith("79")) continue;
@@ -119,12 +120,14 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
       }
     });
 
+    personModels.removeWhere((model) => model.phoneNumbersList.isEmpty);
+
     return personModels;
   }
 
   Future<PersonFileModel> _exploreFile(String name) async {
     final data = await dataProvider.readFile(name);
-    if (data.isEmpty) return PersonFileModel.empty(name: name);
+    if (data.isEmpty) return PersonFileModel.empty(name: '');
 
     final document = parser.parse(data);
 
@@ -141,6 +144,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
       allPhones: allPhonesList,
       allPersonModels: modelsAfterSearching,
       stateModel: PersonStateModel(),
+      fileFounded: true,
     );
   }
 
@@ -154,6 +158,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     PersonFileModel model,
     String region,
   ) async {
+    print(model.allPhones);
     final correctPhones = <String>[];
 
     for (int i = 0; i < model.allPhones!.length; i++) {
@@ -163,5 +168,75 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     }
 
     return correctPhones;
+  }
+
+  @override
+  (List<String>, List<String>) searchByCity(
+    PersonFileModel model,
+    String city,
+  ) {
+    final cityRegionPhones = List<String>.empty(growable: true);
+    final cityPhones = List<String>.empty(growable: true);
+
+    for (int i = 0; i < model.allPersonModels!.length; i++) {
+      final correctCity = model.allPersonModels![i].adressesList.firstWhere(
+        (adress) => adress.toLowerCase().contains(city.toLowerCase().trim()),
+        orElse: () => 'empty',
+      );
+
+      if (correctCity != 'empty') {
+        if (model.stateModel.regionPhones != null) {
+          final correctPhones =
+              model.allPersonModels![i].phoneNumbersList.where(
+            (phone) => model.stateModel.regionPhones!.contains(phone),
+          );
+          cityRegionPhones.addAll(correctPhones);
+        }
+        final correctPhones = model.allPersonModels![i].phoneNumbersList;
+        cityPhones.addAll(correctPhones);
+      }
+    }
+
+    return (cityRegionPhones, cityPhones);
+  }
+
+  @override
+  (MapList, MapList) searchByExperience(
+    PersonFileModel model,
+    String experience,
+  ) {
+    final experienceRegionPhones = MapList.empty(growable: true);
+    final experiencePhones = MapList.empty(growable: true);
+
+    for (int i = 0; i < model.allPersonModels!.length; i++) {
+      final singleModel = model.allPersonModels![i];
+      if (singleModel.dateOfBirth == null) continue;
+
+      final isCorrectedDate = ((DateTime.now().year - 23) -
+                  (singleModel.dateOfBirth!.year + int.parse(experience)))
+              .abs() <=
+          differenceInYears;
+
+      if (isCorrectedDate) {
+        if (model.stateModel.regionPhones != null) {
+          final correctedPhones = singleModel.phoneNumbersList.where(
+            (phone) => model.stateModel.regionPhones!.contains(phone),
+          );
+          if (correctedPhones.isEmpty) continue;
+          experiencePhones.add({
+            DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
+                correctedPhones.toList()
+          });
+        } else {
+          final allPhones = singleModel.phoneNumbersList;
+          experiencePhones.add({
+            DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
+                allPhones.toList()
+          });
+        }
+      }
+    }
+
+    return (experienceRegionPhones, experiencePhones);
   }
 }

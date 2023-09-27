@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:phone_corrector/domain/api/abstract_api_client.dart';
 
@@ -24,8 +22,8 @@ class VoxlinkApiClient implements AbstractApiClient {
         return false;
       }
     } catch (e) {
-      log(e.toString());
-      return false;
+      print(e);
+      throw Exception(e);
     }
   }
 }

@@ -1,11 +1,22 @@
-typedef MapList = List<Map<String, String>>;
+typedef MapList = List<Map<String, List<String>>>;
+
+enum SearchStatus {
+  waiting,
+  inProgress,
+  success,
+  error,
+}
 
 class PersonStateModel {
+  SearchStatus regionStatus = SearchStatus.waiting;
   List<String>? regionPhones;
 
-  MapList? cityRegionPhones;
-  MapList? cityPhones;
+  SearchStatus cityStatus = SearchStatus.waiting;
+  List<String>? cityRegionPhones;
+  List<String>? cityPhones;
 
+  SearchStatus experienceStatus = SearchStatus.waiting;
+  String? experienceToSearch;
   MapList? experienceRegionPhones;
   MapList? experiencePhones;
 }

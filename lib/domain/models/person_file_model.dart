@@ -8,12 +8,14 @@ class PersonFileModel extends Equatable {
     this.allPhones,
     this.allPersonModels,
     required this.stateModel,
+    required this.fileFounded,
   });
 
   final String name;
   final List<String>? allPhones;
   final List<SinglePersonModel>? allPersonModels;
   final PersonStateModel stateModel;
+  final bool fileFounded;
 
   bool get fileWasExamined => allPhones != null && allPersonModels != null;
 
@@ -23,6 +25,7 @@ class PersonFileModel extends Equatable {
       allPhones: null,
       allPersonModels: null,
       stateModel: PersonStateModel(),
+      fileFounded: false,
     );
   }
 
@@ -32,19 +35,21 @@ class PersonFileModel extends Equatable {
         ...?allPhones,
         ...?allPersonModels,
         stateModel,
+        fileFounded,
       ];
 
-  PersonFileModel copyWith({
-    String? name,
-    List<String>? allPhones,
-    List<SinglePersonModel>? allPersonModels,
-    PersonStateModel? stateModel,
-  }) {
+  PersonFileModel copyWith(
+      {String? name,
+      List<String>? allPhones,
+      List<SinglePersonModel>? allPersonModels,
+      PersonStateModel? stateModel,
+      bool? fileFounded}) {
     return PersonFileModel(
       name: name ?? this.name,
       allPhones: allPhones ?? this.allPhones,
       allPersonModels: allPersonModels ?? this.allPersonModels,
       stateModel: stateModel ?? this.stateModel,
+      fileFounded: fileFounded ?? this.fileFounded,
     );
   }
 }

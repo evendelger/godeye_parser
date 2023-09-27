@@ -7,16 +7,6 @@ sealed class FilesEvent extends Equatable {
   List<Object> get props => [];
 }
 
-final class ChangeName extends FilesEvent {
-  const ChangeName({required this.index, required this.name});
-
-  final int index;
-  final String name;
-
-  @override
-  List<Object> get props => [index, name];
-}
-
 final class ClearList extends FilesEvent {
   const ClearList();
 }
@@ -34,6 +24,9 @@ final class AddItems extends FilesEvent {
   const AddItems({required this.count});
 
   final int count;
+
+  @override
+  List<Object> get props => [count];
 }
 
 final class SearchByRegion extends FilesEvent {
@@ -48,5 +41,35 @@ final class SearchByRegion extends FilesEvent {
   final String region;
 
   @override
-  List<Object> get props => [region];
+  List<Object> get props => [index, name, region];
+}
+
+final class SearchByCity extends FilesEvent {
+  const SearchByCity({
+    required this.index,
+    required this.name,
+    required this.city,
+  });
+
+  final int index;
+  final String name;
+  final String city;
+
+  @override
+  List<Object> get props => [index, name, city];
+}
+
+final class SearchByExperience extends FilesEvent {
+  const SearchByExperience({
+    required this.index,
+    required this.name,
+    required this.experience,
+  });
+
+  final int index;
+  final String name;
+  final String experience;
+
+  @override
+  List<Object> get props => [index, name, experience];
 }

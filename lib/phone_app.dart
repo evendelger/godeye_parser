@@ -17,8 +17,8 @@ class PhoneApp extends StatelessWidget {
             color: Colors.white,
           ),
           titleMedium: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
             color: Colors.black,
           ),
         ),
