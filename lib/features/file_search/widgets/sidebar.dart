@@ -20,11 +20,13 @@ class SideBar extends StatelessWidget {
                 _SideBarIcon(
                   title: 'Поиск по файлу',
                   icon: Icons.file_open,
+                  index: 0,
                 ),
                 SizedBox(height: 15),
                 _SideBarIcon(
                   title: 'Поиск по тексту',
                   icon: Icons.abc,
+                  index: 1,
                 ),
               ],
             ),
@@ -36,10 +38,15 @@ class SideBar extends StatelessWidget {
 }
 
 class _SideBarIcon extends StatelessWidget {
-  const _SideBarIcon({super.key, required this.title, required this.icon});
+  const _SideBarIcon({
+    required this.title,
+    required this.icon,
+    required this.index,
+  });
 
   final String title;
   final IconData icon;
+  final int index;
 
   @override
   Widget build(BuildContext context) {

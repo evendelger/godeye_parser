@@ -1,12 +1,10 @@
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phone_corrector/domain/data/regions_data.dart';
 import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/domain/provider_models/provider_models.dart';
 import 'package:phone_corrector/features/file_search/bloc/files_bloc.dart';
+import 'package:phone_corrector/ui/widgets/widgets.dart';
 
 enum ParseType {
   name,
@@ -30,38 +28,43 @@ class ListItem extends StatefulWidget {
 }
 
 class _ListItemState extends State<ListItem> {
-  // 0 - name, 1 - city, 2 - experience
-  late final List<TextEditingController> controllers;
+  late final TextEditingController nameController;
+  late final TextEditingController cityController;
+  late final TextEditingController experienceController;
 
   @override
   void initState() {
-    controllers = [
-      TextEditingController(),
-      TextEditingController(),
-      TextEditingController(),
-    ];
+    nameController = TextEditingController();
+    cityController = TextEditingController();
+    experienceController = TextEditingController();
     super.initState();
+
+    final searchingDataItem =
+        context.read<SearchingDataList>().listOfControllers[widget.index];
+    nameController.text = searchingDataItem.nameControllerText;
+    cityController.text = searchingDataItem.cityControllerText;
+    experienceController.text = searchingDataItem.experienceControllerText;
   }
 
   @override
   void dispose() {
-    for (var c in controllers) {
-      c.dispose();
-    }
+    nameController.dispose();
+    cityController.dispose();
+    experienceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _RowIndex(index: widget.index),
           _TextFieldExample(
-            width: 400,
-            controller: controllers[0],
+            width: 350,
+            controller: nameController,
             hintText: 'Введите ФИО',
             parseType: ParseType.name,
             index: widget.index,
@@ -69,16 +72,19 @@ class _ListItemState extends State<ListItem> {
           const SizedBox(width: 10),
           _RowRegionSearch(index: widget.index),
           _RowCitySearch(
-            cityController: controllers[1],
+            cityController: cityController,
             index: widget.index,
           ),
           _RowExperienceSearch(
-            experienceController: controllers[2],
+            experienceController: experienceController,
             index: widget.index,
           ),
           _RowIconsStatus(index: widget.index),
           const SizedBox(width: 10),
-          _ClearButton(controllers: controllers, index: widget.index),
+          _ClearButton(
+            controllers: [nameController, cityController, experienceController],
+            index: widget.index,
+          ),
         ],
       ),
     );
@@ -108,7 +114,7 @@ class _ClearButton extends StatelessWidget {
       onPressed: () => _clearItem(context, index),
       padding: EdgeInsets.zero,
       icon: Icon(
-        Icons.clear_all,
+        Icons.delete,
         size: 35,
         color: Colors.red.shade400,
       ),
@@ -284,69 +290,27 @@ class _RowRegionSearch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initialValue = context
+        .read<SearchingDataList>()
+        .listOfControllers[index]
+        .regionToSearch;
+
     return Row(
       children: [
-        _DropDownListWidget(index: index),
+        DropDownListWidget(
+          index: index,
+          controller: TextEditingController(),
+          typeOfProvider: TypeOfProvider.filesSearch,
+          width: 290,
+          height: 30,
+          contentPadding: const EdgeInsets.only(bottom: 3, left: 30),
+          fontSize: 19,
+          overflow: TextOverflow.ellipsis,
+          initialValue: initialValue.isEmpty ? null : initialValue,
+        ),
         _SearchButton(searchType: SearchType.region, index: index),
         _ShowButton(searchType: SearchType.region, index: index),
       ],
-    );
-  }
-}
-
-class _DropDownListWidget extends StatelessWidget {
-  const _DropDownListWidget({super.key, required this.index});
-
-  final int index;
-
-  void _saveSelectedRegion(BuildContext context, String? value) {
-    if (value != null) {
-      context
-          .read<SearchingDataList>()
-          .listOfControllers[index]
-          .regionToSearch = value;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 230,
-      height: 30,
-      child: DropdownSearch<String>(
-        dropdownButtonProps: const DropdownButtonProps(isVisible: false),
-        popupProps: PopupProps.dialog(
-          showSearchBox: true,
-          searchDelay: Duration.zero,
-          // TODO: причесать окно поиска
-          emptyBuilder: (context, searchEntry) {
-            return const Center(child: Text('Ничего не найдено'));
-          },
-        ),
-        items: DrowDownRegionsData.regions,
-        dropdownDecoratorProps: DropDownDecoratorProps(
-          textAlign: TextAlign.center,
-          textAlignVertical: TextAlignVertical.center,
-          baseStyle: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            overflow: TextOverflow.ellipsis,
-          ),
-          dropdownSearchDecoration: InputDecoration(
-            isDense: true,
-            hintText: "Выбрать регион",
-            hintStyle: TextStyle(color: Colors.black.withOpacity(0.4)),
-            contentPadding: const EdgeInsets.only(bottom: 3, left: 30),
-            isCollapsed: true,
-            filled: true,
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(15)),
-            ),
-          ),
-        ),
-        onChanged: (value) => _saveSelectedRegion(context, value),
-        selectedItem: null,
-      ),
     );
   }
 }
@@ -428,8 +392,7 @@ class _TextFieldExample extends StatelessWidget {
         }
       case ParseType.experience:
         {
-          final parsedValue =
-              int.tryParse(controllersModel.experienceControllerText);
+          final parsedValue = int.tryParse(controller.text);
           if (parsedValue != null) {
             controllersModel.experienceControllerText = controller.text;
           }
@@ -605,9 +568,12 @@ class _AlertDialog extends StatelessWidget {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
-        return _textMessage('Идет поиск...');
+        return _progressIndicator();
       case SearchStatus.success:
-        return _regionInfo(model);
+        return RegionInfoWidget(
+          regionPhones: model.stateModel.regionPhones!,
+          allPhones: model.allPhones!,
+        );
       case SearchStatus.error:
         return _textMessage('Ошибка, повторите попытку');
     }
@@ -618,7 +584,7 @@ class _AlertDialog extends StatelessWidget {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
-        return _textMessage('Идет поиск...');
+        return _progressIndicator();
       case SearchStatus.success:
         return _cityInfo(model);
       case SearchStatus.error:
@@ -631,7 +597,7 @@ class _AlertDialog extends StatelessWidget {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
-        return _textMessage('Идет поиск...');
+        return _progressIndicator();
       case SearchStatus.success:
         return _experienceInfo(model);
       case SearchStatus.error:
@@ -673,48 +639,21 @@ class _AlertDialog extends StatelessWidget {
     );
   }
 
-  Center _textMessage(String text) {
-    return Center(
-        child: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w400,
-      ),
-    ));
+  Center _progressIndicator() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
   }
 
-  ListView _regionInfo(PersonFileModel model) {
-    return ListView(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _summaryInfoBlock(
-              'Регион',
-              model.stateModel.regionPhones!,
-              Colors.green.shade700,
-            ),
-            _summaryInfoBlock(
-              'Всего',
-              model.allPhones!,
-              Colors.black87,
-            ),
-          ],
+  Center _textMessage(String text) {
+    return Center(
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w400,
         ),
-        const SizedBox(height: 30),
-        _allInfoBlock(
-          'Регион',
-          model.stateModel.regionPhones!,
-          Colors.green.shade700,
-        ),
-        const SizedBox(height: 10),
-        _allInfoBlock(
-          'Всего',
-          model.allPhones!,
-          Colors.black87,
-        ),
-      ],
+      ),
     );
   }
 

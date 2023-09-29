@@ -27,9 +27,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
   void _clearList(ClearList event, Emitter<FilesState> emit) {
     state.models.clear();
-    state.models.addAll(List<PersonFileModel>.filled(
+    state.models.addAll(List<PersonFileModel>.generate(
       5,
-      PersonFileModel.empty(),
+      (_) => PersonFileModel.empty(),
       growable: true,
     ));
     emit(FilesState(models: state.models));
@@ -39,9 +39,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     if (event.count == 1) {
       state.models.add(PersonFileModel.empty());
     } else {
-      state.models.addAll(List<PersonFileModel>.filled(
+      state.models.addAll(List<PersonFileModel>.generate(
         event.count,
-        PersonFileModel.empty(),
+        (_) => PersonFileModel.empty(),
         growable: true,
       ));
     }
@@ -64,8 +64,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   ) async {
     if (event.name != state.models[event.index].name ||
         !state.models[event.index].fileWasExamined) {
-      state.models[event.index] =
-          state.models[event.index].copyWith(name: event.name);
+      state.models[event.index] = state.models[event.index].copyWith(
+        name: event.name,
+      );
       await _examineFile(event.index);
     }
     if (!state.models[event.index].fileFounded) {
@@ -77,7 +78,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     emit(FilesState(models: state.models));
 
     final correctedPhones = await dataRepository.searchByRegion(
-        state.models[event.index], event.region);
+      state.models[event.index],
+      event.region,
+    );
     state.models[event.index].stateModel.regionPhones = correctedPhones;
     state.models[event.index].stateModel.regionStatus = SearchStatus.success;
     emit(FilesState(models: state.models));

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phone_corrector/domain/provider_models/provider_models.dart';
+import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/features/file_search/bloc/files_bloc.dart';
 import 'package:phone_corrector/features/file_search/widgets/widgets.dart';
 
@@ -14,8 +14,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final _animatedListKey = GlobalKey<AnimatedListState>();
-
+  late final _animatedListKey;
   late final ScrollController _scrollController;
 
   void _addToList(int count) {
@@ -40,6 +39,7 @@ class _MainPageState extends State<MainPage> {
         .removeAllItems((context, animation) => const SizedBox.shrink());
 
     context.read<FilesBloc>().add(const ClearList());
+    context.read<SearchingDataList>().clearList();
     Future.microtask(
       () => {
         for (int i = 0; i < context.read<FilesBloc>().state.models.length; i++)
@@ -55,6 +55,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
+    _animatedListKey = GlobalKey<AnimatedListState>();
     _scrollController = ScrollController();
     super.initState();
   }
@@ -77,7 +78,8 @@ class _MainPageState extends State<MainPage> {
               child: AnimatedList(
                 controller: _scrollController,
                 key: _animatedListKey,
-                initialItemCount: 5,
+                initialItemCount:
+                    context.read<SearchingDataList>().listOfControllers.length,
                 itemBuilder: (context, index, animation) {
                   return AnimatedListItem(
                     index: index,

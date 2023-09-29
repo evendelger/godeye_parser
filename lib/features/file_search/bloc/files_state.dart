@@ -7,9 +7,9 @@ class FilesState {
 
   factory FilesState.init() {
     return FilesState(
-      models: List<PersonFileModel>.filled(
+      models: List<PersonFileModel>.generate(
         5,
-        PersonFileModel.empty(),
+        (_) => PersonFileModel.empty(),
         growable: true,
       ),
     );

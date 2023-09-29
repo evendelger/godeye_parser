@@ -20,6 +20,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
 
   static const differenceInYears = 5;
   static final datePattern = RegExp(r'\d{2}\.\d{2}\.\d{4}');
+  static final phonePattern = RegExp(r'(7|8)9\d{9}');
 
   List<String> _getPhonesList(Element blockInfoList) {
     final phoneList = <String>[];
@@ -27,9 +28,11 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     try {
       final phoneBlock = blockInfoList.children
           .firstWhere((e) => e.children[0].text == "Телефоны:");
-      phoneList.addAll(phoneBlock.children[1].text
-          .split(', ')
-          .where((phone) => phone.length == 11 && phone.startsWith('79')));
+      phoneList.addAll(phoneBlock.children[1].text.split(', ').where(
+            (phone) =>
+                phone.length == 11 && phone.startsWith('79') ||
+                phone.startsWith('89'),
+          ));
     } catch (e) {
       log(e.toString());
       return phoneList;
@@ -238,5 +241,27 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     }
 
     return (experienceRegionPhones, experiencePhones);
+  }
+
+  @override
+  Future<(List<String>, List<String>)> searchByText(
+    String text,
+    String region,
+  ) async {
+    final List<String> correctedPhones = [];
+    final List<String> allPhones = [];
+
+    final matchedPhones = phonePattern.allMatches(text);
+    for (var match in matchedPhones) {
+      final phone = match.group(0);
+      if (phone != null) {
+        allPhones.add(phone);
+        if (await apiClient.checkRegion(phone, region)) {
+          correctedPhones.add(phone);
+        }
+      }
+    }
+
+    return (correctedPhones, allPhones);
   }
 }

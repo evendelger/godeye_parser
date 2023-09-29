@@ -22,6 +22,7 @@ class PhoneApp extends StatelessWidget {
             color: Colors.black,
           ),
         ),
+        //splashFactory: NoSplash.splashFactory,
         useMaterial3: true,
       ),
       home: const FileSearchScreen(),
