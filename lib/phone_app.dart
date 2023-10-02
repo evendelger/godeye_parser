@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'features/file_search/view/view.dart';
+import 'package:phone_corrector/service_locator.dart';
+import 'package:phone_corrector/services/screen_size_service.dart';
+import 'package:phone_corrector/ui/navigation/navigation.dart';
 
 class PhoneApp extends StatelessWidget {
   const PhoneApp({super.key});
+
+  static final navigation = Navigation(
+    screenSizeService: getIt<ScreenSizeService>(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +28,10 @@ class PhoneApp extends StatelessWidget {
             color: Colors.black,
           ),
         ),
-        //splashFactory: NoSplash.splashFactory,
         useMaterial3: true,
       ),
-      home: const FileSearchScreen(),
+      routes: navigation.routes,
+      initialRoute: navigation.initialRoute(),
     );
   }
 }

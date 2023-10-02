@@ -9,6 +9,7 @@ enum SearchStatus {
 
 class PersonStateModel {
   SearchStatus regionStatus = SearchStatus.waiting;
+  String? regionToSearch;
   List<String>? regionPhones;
 
   SearchStatus cityStatus = SearchStatus.waiting;

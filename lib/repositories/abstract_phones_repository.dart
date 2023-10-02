@@ -4,7 +4,7 @@ abstract class AbstractPhonesDataRepository {
   Future<PersonFileModel> getDataFromFile(
     String name,
   );
-  Future<List<String>> searchByRegion(
+  List<String> searchByRegion(
     PersonFileModel model,
     String region,
   );
@@ -16,7 +16,7 @@ abstract class AbstractPhonesDataRepository {
     PersonFileModel model,
     String experience,
   );
-  Future<(List<String>, List<String>)> searchByText(
+  (List<String>, List<String>) searchByText(
     String text,
     String region,
   );

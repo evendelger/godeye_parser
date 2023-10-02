@@ -4,19 +4,19 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 
-import 'package:phone_corrector/domain/api/api.dart';
-import 'package:phone_corrector/domain/data/data_provider/abstract_Data_provider.dart';
+import 'package:phone_corrector/domain/data/data_provider/data_provider.dart';
 import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/repositories/abstract_phones_repository.dart';
+import 'package:phone_corrector/services/phones_service.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
   const PhonesDataRepository({
-    required this.apiClient,
     required this.dataProvider,
+    required this.phonesService,
   });
 
-  final AbstractApiClient apiClient;
-  final AbstractDataProvider dataProvider;
+  final DataProvider dataProvider;
+  final PhonesService phonesService;
 
   static const differenceInYears = 5;
   static final datePattern = RegExp(r'\d{2}\.\d{2}\.\d{4}');
@@ -129,7 +129,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   }
 
   Future<PersonFileModel> _exploreFile(String name) async {
-    final data = await dataProvider.readFile(name);
+    final data = await dataProvider.readPersonFile(name);
     if (data.isEmpty) return PersonFileModel.empty(name: '');
 
     final document = parser.parse(data);
@@ -157,16 +157,14 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   }
 
   @override
-  Future<List<String>> searchByRegion(
+  List<String> searchByRegion(
     PersonFileModel model,
     String region,
-  ) async {
-    print(model.allPhones);
+  ) {
     final correctPhones = <String>[];
 
     for (int i = 0; i < model.allPhones!.length; i++) {
-      final isCorrect =
-          await apiClient.checkRegion(model.allPhones![i], region);
+      final isCorrect = phonesService.checkRegion(model.allPhones![i], region);
       if (isCorrect) correctPhones.add(model.allPhones![i]);
     }
 
@@ -226,7 +224,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
             (phone) => model.stateModel.regionPhones!.contains(phone),
           );
           if (correctedPhones.isEmpty) continue;
-          experiencePhones.add({
+          experienceRegionPhones.add({
             DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
                 correctedPhones.toList()
           });
@@ -244,10 +242,10 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   }
 
   @override
-  Future<(List<String>, List<String>)> searchByText(
+  (List<String>, List<String>) searchByText(
     String text,
     String region,
-  ) async {
+  ) {
     final List<String> correctedPhones = [];
     final List<String> allPhones = [];
 
@@ -256,7 +254,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
       final phone = match.group(0);
       if (phone != null) {
         allPhones.add(phone);
-        if (await apiClient.checkRegion(phone, region)) {
+        if (phonesService.checkRegion(phone, region)) {
           correctedPhones.add(phone);
         }
       }

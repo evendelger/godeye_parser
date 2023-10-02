@@ -69,7 +69,6 @@ class DropDownListWidget extends StatelessWidget {
         child: DropdownSearch<String>(
           dropdownButtonProps: const DropdownButtonProps(isVisible: false),
           popupProps: PopupProps.dialog(
-            fit: FlexFit.tight,
             showSearchBox: true,
             searchDelay: Duration.zero,
             dialogProps: const DialogProps(clipBehavior: Clip.antiAlias),
@@ -87,20 +86,10 @@ class DropDownListWidget extends StatelessWidget {
               ),
             ),
             itemBuilder: (_, item, __) {
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: theme.primaryColor.withOpacity(0.15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Text(
-                    item,
-                    textAlign: TextAlign.center,
-                    style: textStyle,
-                  ),
-                ),
+              return SingleItemAlertDialog(
+                item: item,
+                theme: theme,
+                textStyle: textStyle,
               );
             },
             emptyBuilder: (context, searchEntry) {
@@ -109,7 +98,7 @@ class DropDownListWidget extends StatelessWidget {
               );
             },
           ),
-          items: DrowDownRegionsData.regions,
+          items: DrowDownRegionsData.regionMap.keys.toList(),
           dropdownDecoratorProps: DropDownDecoratorProps(
             textAlign: TextAlign.center,
             textAlignVertical: TextAlignVertical.center,
@@ -136,6 +125,41 @@ class DropDownListWidget extends StatelessWidget {
             typeOfProvider,
           ),
           selectedItem: initialValue,
+        ),
+      ),
+    );
+  }
+}
+
+class SingleItemAlertDialog extends StatelessWidget {
+  const SingleItemAlertDialog({
+    super.key,
+    this.width,
+    required this.theme,
+    required this.textStyle,
+    required this.item,
+  });
+
+  final double? width;
+  final String item;
+  final ThemeData theme;
+  final TextStyle textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: theme.primaryColor.withOpacity(0.15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: Text(
+          item,
+          textAlign: TextAlign.center,
+          style: textStyle,
         ),
       ),
     );

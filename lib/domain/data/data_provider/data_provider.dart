@@ -1,20 +1,36 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:phone_corrector/domain/data/data_provider/abstract_Data_provider.dart';
+class DataProvider {
+  DataProvider(this.filesPath) {
+    _convertDataFileToMap();
+  }
 
-class DataProvider implements AbstractDataProvider {
-  const DataProvider();
+  String filesPath;
+  Map<String, List<List<String>>> dataPhonesMap = {};
 
-  // TODO: добавить выбор папки при запуске программы, т.е. через hive сохранять это
-  static const filesPath = r"C:\Users\even\Downloads\Telegram Desktop\";
+  void changePath(String path) => filesPath = path;
+
+  Future<void> _convertDataFileToMap() async {
+    final dataFile = File('assets/data.csv');
+    Stream<List> inputStream = dataFile.openRead();
+    final data =
+        inputStream.transform(utf8.decoder).transform(const LineSplitter());
+
+    await for (var line in data) {
+      final row = line.split(';');
+
+      final phoneCode = row[0];
+      final listOfData = dataPhonesMap[phoneCode] ?? [];
+      listOfData.add(row.sublist(1));
+      dataPhonesMap[phoneCode] = listOfData;
+    }
+  }
 
   Future<String> _getDirectory(String name) async {
-    final firstDir = "$filesPath$name.html";
-    final secondDir = "$filesPath${name.replaceAll(' ', '_')}.html";
-
-    log(firstDir);
-    log(secondDir);
+    final firstDir = "$filesPath\\$name.html";
+    final secondDir = "$filesPath\\${name.replaceAll(' ', '_')}.html";
 
     if (await File(firstDir).exists()) {
       return firstDir;
@@ -24,8 +40,7 @@ class DataProvider implements AbstractDataProvider {
     return '';
   }
 
-  @override
-  Future<String> readFile(String name) async {
+  Future<String> readPersonFile(String name) async {
     final file = File(await _getDirectory(name));
     if (file.path.isEmpty) {
       // TODO: доработать обработку ошибок
