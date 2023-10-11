@@ -22,7 +22,7 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
     textController = TextEditingController();
     regionController = TextEditingController();
     super.initState();
-    final textItem = context.read<SearchingDataList>().textItem;
+    final textItem = context.read<FullSearchingData>().textItem;
     textController.text = textItem.controllerText;
   }
 
@@ -36,7 +36,7 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final initialValue =
-        context.read<SearchingDataList>().textItem.regionToSearch;
+        context.read<FullSearchingData>().textItem.regionToSearch;
 
     return Expanded(
       child: Row(
@@ -45,11 +45,10 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                //const SizedBox(height: 70),
                 const Spacer(),
                 DropDownListWidget(
                   controller: regionController,
-                  typeOfProvider: TypeOfProvider.textSearch,
+                  typeOfProvider: ProviderType.fullTextSearch,
                   width: 700,
                   height: null,
                   contentPadding: const EdgeInsets.only(
@@ -57,9 +56,11 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
                     left: 15,
                     right: 15,
                   ),
-                  fontSize: 30,
+                  fontSelectedSize: 30,
                   overflow: TextOverflow.visible,
                   initialValue: initialValue.isEmpty ? null : initialValue,
+                  screenType: ScreenType.full,
+                  fontItembuilderSize: 20,
                 ),
                 const SizedBox(height: 30),
                 _TextField(controller: textController),
@@ -108,10 +109,10 @@ class _InfoDataWdget extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            BlocBuilder<TextBloc, TextState>(
+            BlocBuilder<TextSearchBloc, TextSearchState>(
               builder: (context, state) {
                 if (state is TextInitial) {
-                  return const Text('Начните поиск.');
+                  return const Text('Начните поиск');
                 } else if (state is TextLoading) {
                   return const CircularProgressIndicator();
                 } else if (state is TextLoaded) {
@@ -156,8 +157,8 @@ class _ButtonsRow extends StatelessWidget {
   final TextEditingController textController;
 
   void _search(BuildContext context) {
-    final textItem = context.read<SearchingDataList>().textItem;
-    context.read<TextBloc>().add(
+    final textItem = context.read<FullSearchingData>().textItem;
+    context.read<TextSearchBloc>().add(
           SearchByRegion(
             text: textItem.controllerText,
             region: DrowDownRegionsData.regionMap[textItem.regionToSearch]!,
@@ -169,7 +170,7 @@ class _ButtonsRow extends StatelessWidget {
     final cdata = await Clipboard.getData(Clipboard.kTextPlain);
     if (cdata != null && context.mounted) {
       textController.text = cdata.text ?? textController.text;
-      context.read<SearchingDataList>().textItem.controllerText =
+      context.read<FullSearchingData>().textItem.controllerText =
           textController.text;
     }
   }
@@ -211,7 +212,7 @@ class _TextField extends StatelessWidget {
 
   void _saveValue(BuildContext context, String value) {
     controller.text = value;
-    context.read<SearchingDataList>().textItem.controllerText = value;
+    context.read<FullSearchingData>().textItem.controllerText = value;
   }
 
   @override

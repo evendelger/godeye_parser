@@ -1,11 +1,11 @@
-class SearchingDataList {
-  const SearchingDataList(this.listOfControllers, this.textItem);
+class FullSearchingData {
+  const FullSearchingData(this.controllers, this.textItem);
 
-  final List<FileSearchingDataItem> listOfControllers;
+  final List<FileSearchingDataItem> controllers;
   final TextSearchingDataItem textItem;
 
-  factory SearchingDataList.init() {
-    return SearchingDataList(
+  factory FullSearchingData.init() {
+    return FullSearchingData(
       List<FileSearchingDataItem>.generate(
         5,
         (_) => FileSearchingDataItem(),
@@ -16,8 +16,8 @@ class SearchingDataList {
   }
 
   void clearList() {
-    listOfControllers.clear();
-    listOfControllers.addAll(List<FileSearchingDataItem>.generate(
+    controllers.clear();
+    controllers.addAll(List<FileSearchingDataItem>.generate(
       5,
       (_) => FileSearchingDataItem(),
       growable: true,
@@ -26,14 +26,24 @@ class SearchingDataList {
 
   void addItems(int length) {
     if (length == 1) {
-      listOfControllers.add(FileSearchingDataItem());
+      controllers.add(FileSearchingDataItem());
     } else {
-      listOfControllers.addAll(List<FileSearchingDataItem>.generate(
+      controllers.addAll(List<FileSearchingDataItem>.generate(
         length,
         (_) => FileSearchingDataItem(),
         growable: true,
       ));
     }
+  }
+}
+
+class MiniSearchingData {
+  const MiniSearchingData(this.controllers);
+
+  final FileSearchingDataItem controllers;
+
+  factory MiniSearchingData.init() {
+    return MiniSearchingData(FileSearchingDataItem());
   }
 }
 

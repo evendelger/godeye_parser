@@ -7,12 +7,6 @@ import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/features/full_file_search/full_file_search.dart';
 import 'package:phone_corrector/ui/widgets/widgets.dart';
 
-enum ParseType {
-  name,
-  city,
-  experience,
-}
-
 enum SearchType {
   region,
   city,
@@ -41,7 +35,7 @@ class _ListItemState extends State<ListItem> {
     super.initState();
 
     final searchingDataItem =
-        context.read<SearchingDataList>().listOfControllers[widget.index];
+        context.read<FullSearchingData>().controllers[widget.index];
     nameController.text = searchingDataItem.nameControllerText;
     cityController.text = searchingDataItem.cityControllerText;
     experienceController.text = searchingDataItem.experienceControllerText;
@@ -63,12 +57,16 @@ class _ListItemState extends State<ListItem> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _RowIndex(index: widget.index),
-          _TextFieldExample(
+          CustomTextField(
+            searchingDataType: SearchingDataType.full,
+            index: widget.index,
             width: 350,
             controller: nameController,
             hintText: 'Введите ФИО',
             parseType: ParseType.name,
-            index: widget.index,
+            height: null,
+            fontSize: 18,
+            maxLines: 1,
           ),
           const SizedBox(width: 10),
           _RowRegionSearch(index: widget.index),
@@ -144,21 +142,27 @@ class _RowIconsStatus extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(5),
       child: BlocBuilder<FileSearchBloc, FileSearchState>(
+        buildWhen: (previous, current) {
+          if (current is FilesSingleState && current.index == index) {
+            return true;
+          }
+          return false;
+        },
         builder: (context, state) {
           final stateModel = state.models[index].stateModel;
           return Row(
             children: [
               _SingleIconStatus(
                 icon: Icons.person,
-                searchStatus: stateModel.regionStatus,
+                searchStatus: stateModel.statuses.regionStatus,
               ),
               _SingleIconStatus(
                 icon: Icons.location_city,
-                searchStatus: stateModel.cityStatus,
+                searchStatus: stateModel.statuses.cityStatus,
               ),
               _SingleIconStatus(
                 icon: Icons.work,
-                searchStatus: stateModel.experienceStatus,
+                searchStatus: stateModel.statuses.experienceStatus,
               ),
             ],
           );
@@ -215,12 +219,16 @@ class _RowExperienceSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _TextFieldExample(
+        CustomTextField(
+          searchingDataType: SearchingDataType.full,
+          index: index,
           width: 110,
           controller: experienceController,
           hintText: 'Стаж',
           parseType: ParseType.experience,
-          index: index,
+          height: null,
+          fontSize: 19,
+          maxLines: 1,
         ),
         _SearchButton(searchType: SearchType.experience, index: index),
         _ShowButton(searchType: SearchType.experience, index: index),
@@ -243,12 +251,16 @@ class _RowCitySearch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _TextFieldExample(
+        CustomTextField(
+          searchingDataType: SearchingDataType.full,
+          index: index,
           width: 175,
           controller: cityController,
           hintText: 'Введите город',
           parseType: ParseType.city,
-          index: index,
+          height: null,
+          fontSize: 19,
+          maxLines: 1,
         ),
         _SearchButton(searchType: SearchType.city, index: index),
         _ShowButton(searchType: SearchType.city, index: index),
@@ -291,149 +303,27 @@ class _RowRegionSearch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialValue = context
-        .read<SearchingDataList>()
-        .listOfControllers[index]
-        .regionToSearch;
+    final initialValue =
+        context.read<FullSearchingData>().controllers[index].regionToSearch;
 
     return Row(
       children: [
         DropDownListWidget(
           index: index,
           controller: TextEditingController(),
-          typeOfProvider: TypeOfProvider.filesSearch,
+          typeOfProvider: ProviderType.fullFilesSearch,
           width: 312,
           height: 30,
-          contentPadding: const EdgeInsets.only(bottom: 3, left: 30),
-          fontSize: 19,
+          contentPadding: const EdgeInsets.only(bottom: 3, left: 40),
+          fontSelectedSize: 19,
           overflow: TextOverflow.ellipsis,
           initialValue: initialValue.isEmpty ? null : initialValue,
+          screenType: ScreenType.full,
+          fontItembuilderSize: 20,
         ),
         _SearchButton(searchType: SearchType.region, index: index),
         _ShowButton(searchType: SearchType.region, index: index),
       ],
-    );
-  }
-}
-
-class _TextFieldExample extends StatelessWidget {
-  const _TextFieldExample({
-    super.key,
-    required this.width,
-    required this.controller,
-    required this.hintText,
-    required this.parseType,
-    required this.index,
-  });
-
-  final double width;
-  final String hintText;
-  final TextEditingController controller;
-  final ParseType parseType;
-  final int index;
-
-  Future<void> _getAndFormatText(BuildContext context) async {
-    final cdata = await Clipboard.getData(Clipboard.kTextPlain);
-    if (cdata == null || cdata.text == null) return;
-
-    switch (parseType) {
-      case ParseType.name:
-        {
-          final text = cdata.text!.trim();
-          controller.text = text;
-
-          if (context.mounted) {
-            _saveControllerValue(context, text);
-          }
-        }
-      case ParseType.city:
-        {
-          final trimmedText = cdata.text!.trim();
-          final indexOfSpace = trimmedText.lastIndexOf(' ');
-          final text = indexOfSpace != -1
-              ? trimmedText.substring(0, indexOfSpace)
-              : trimmedText;
-          controller.text = text;
-
-          if (context.mounted) {
-            _saveControllerValue(context, text);
-          }
-        }
-      case ParseType.experience:
-        {
-          final parsedText = StringBuffer();
-          for (int i = 0; i < cdata.text!.length; i++) {
-            final symbol = cdata.text![i];
-            if (int.tryParse(symbol) != null) {
-              parsedText.write(symbol);
-            }
-          }
-          controller.text = parsedText.toString().isNotEmpty
-              ? parsedText.toString()
-              : controller.text;
-
-          if (context.mounted) {
-            _saveControllerValue(context, parsedText.toString());
-          }
-        }
-    }
-  }
-
-  void _saveControllerValue(BuildContext context, String value) {
-    final controllersModel =
-        context.read<SearchingDataList>().listOfControllers[index];
-    switch (parseType) {
-      case ParseType.name:
-        {
-          controllersModel.nameControllerText = controller.text;
-        }
-      case ParseType.city:
-        {
-          controllersModel.cityControllerText = controller.text;
-        }
-      case ParseType.experience:
-        {
-          final parsedValue = int.tryParse(controller.text);
-          if (parsedValue != null) {
-            controllersModel.experienceControllerText = controller.text;
-          }
-        }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: TextField(
-        controller: controller,
-        onChanged: (value) => _saveControllerValue(context, value),
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
-          isDense: true,
-          suffixIcon: CupertinoButton(
-            onPressed: () => _getAndFormatText(context),
-            child: const Icon(Icons.paste, size: 20),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: Color(0xFF364091),
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -446,27 +336,26 @@ class _SearchButton extends StatelessWidget {
   final int index;
 
   void _search(BuildContext context) {
-    final itemModel =
-        context.read<SearchingDataList>().listOfControllers[index];
+    final itemModel = context.read<FullSearchingData>().controllers[index];
     final bloc = context.read<FileSearchBloc>();
 
     switch (searchType) {
       case SearchType.region:
         {
           if (itemModel.regionToSearch.isEmpty ||
-              bloc.state.models[index].stateModel.regionStatus ==
+              bloc.state.models[index].stateModel.statuses.regionStatus ==
                   SearchStatus.inProgress) return;
         }
       case SearchType.city:
         {
           if (itemModel.cityControllerText.isEmpty ||
-              bloc.state.models[index].stateModel.cityStatus ==
+              bloc.state.models[index].stateModel.statuses.cityStatus ==
                   SearchStatus.inProgress) return;
         }
       case SearchType.experience:
         {
           if (itemModel.experienceControllerText.isEmpty ||
-              bloc.state.models[index].stateModel.experienceStatus ==
+              bloc.state.models[index].stateModel.statuses.experienceStatus ==
                   SearchStatus.inProgress) return;
         }
     }
@@ -578,7 +467,7 @@ class _AlertDialog extends StatelessWidget {
   }
 
   Widget _switchRegionStatus(PersonFileModel model) {
-    switch (model.stateModel.regionStatus) {
+    switch (model.stateModel.statuses.regionStatus) {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
@@ -589,12 +478,12 @@ class _AlertDialog extends StatelessWidget {
           allPhones: model.allPhones!,
         );
       case SearchStatus.error:
-        return _textMessage('Ошибка, повторите попытку');
+        return _textMessage('Файл не найден, проверьте корректность ФИО');
     }
   }
 
   Widget _switchCityStatus(PersonFileModel model) {
-    switch (model.stateModel.cityStatus) {
+    switch (model.stateModel.statuses.cityStatus) {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
@@ -602,12 +491,12 @@ class _AlertDialog extends StatelessWidget {
       case SearchStatus.success:
         return _cityInfo(model);
       case SearchStatus.error:
-        return _textMessage('Ошибка, повторите попытку');
+        return _textMessage('Файл не найден, проверьте корректность ФИО');
     }
   }
 
   Widget _switchExperienceStatus(PersonFileModel model) {
-    switch (model.stateModel.experienceStatus) {
+    switch (model.stateModel.statuses.experienceStatus) {
       case SearchStatus.waiting:
         return _textMessage('Начните поиск');
       case SearchStatus.inProgress:
@@ -615,7 +504,7 @@ class _AlertDialog extends StatelessWidget {
       case SearchStatus.success:
         return _experienceInfo(model);
       case SearchStatus.error:
-        return _textMessage('Ошибка, повторите попытку');
+        return _textMessage('Файл не найден, проверьте корректность ФИО');
     }
   }
 
@@ -843,7 +732,7 @@ class _AlertDialog extends StatelessWidget {
       5: Color(0xFF861239),
     };
 
-    List<Row> listOfMappedPhones() {
+    List<SizedBox> listOfMappedPhones() {
       const int trueDiff = 5;
       final rowMap = <String, List<String>>{};
 
@@ -856,9 +745,9 @@ class _AlertDialog extends StatelessWidget {
           rowMap[date] = element.values.toList()[0];
         }
       }
-      if (rowMap.isEmpty) return List<Row>.empty();
+      if (rowMap.isEmpty) return List<SizedBox>.empty();
 
-      return List<Row>.generate(rowMap.length, (index) {
+      return List<SizedBox>.generate(rowMap.length, (index) {
         final key = rowMap.keys.toList()[index];
         final values = rowMap.values.toList()[index];
         final diff = (DateTime.now().year -
@@ -868,17 +757,23 @@ class _AlertDialog extends StatelessWidget {
             ? greenColorsMap[diff]
             : redColorsMap[diff];
 
-        return Row(
-          children: [
-            Text(
-              '$key - ',
-              style: textStyle.copyWith(color: mappedColor),
-            ),
-            Wrap(
-              spacing: 10,
-              children: listOfPhones(values, mappedColor),
-            ),
-          ],
+        return SizedBox(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$key - ',
+                style: textStyle.copyWith(color: mappedColor),
+              ),
+              Flexible(
+                child: Wrap(
+                  runAlignment: WrapAlignment.center,
+                  spacing: 10,
+                  children: listOfPhones(values, mappedColor),
+                ),
+              ),
+            ],
+          ),
         );
       });
     }

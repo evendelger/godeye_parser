@@ -5,9 +5,16 @@ import 'package:phone_corrector/domain/data/regions_data.dart';
 import 'package:phone_corrector/domain/models/models.dart';
 import 'package:phone_corrector/ui/functions/functions.dart';
 
-enum TypeOfProvider {
-  filesSearch,
-  textSearch,
+enum ProviderType {
+  fullFilesSearch,
+  fullTextSearch,
+  miniFilesSearch,
+  miniTextSearch,
+}
+
+enum ScreenType {
+  full,
+  mini,
 }
 
 class DropDownListWidget extends StatelessWidget {
@@ -19,46 +26,51 @@ class DropDownListWidget extends StatelessWidget {
     required this.width,
     required this.height,
     required this.contentPadding,
-    required this.fontSize,
+    required this.fontSelectedSize,
     required this.overflow,
     required this.initialValue,
+    required this.screenType,
+    required this.fontItembuilderSize,
   });
 
   final int? index;
   final TextEditingController controller;
-  final TypeOfProvider typeOfProvider;
-  final double width;
+  final ProviderType typeOfProvider;
+  final double? width;
   final double? height;
   final EdgeInsets contentPadding;
-  final double fontSize;
+  final double fontSelectedSize;
   final TextOverflow overflow;
   final String? initialValue;
+  final ScreenType screenType;
+  final double fontItembuilderSize;
 
   void _saveSelectedRegion(
     BuildContext context,
     String? value,
-    TypeOfProvider typeOfProvider,
+    ProviderType typeOfProvider,
   ) {
     if (value != null) {
-      final model = context.read<SearchingDataList>();
-      switch (typeOfProvider) {
-        case TypeOfProvider.filesSearch:
-          {
-            model.listOfControllers[index!].regionToSearch = value;
-          }
-        case TypeOfProvider.textSearch:
-          {
-            model.textItem.regionToSearch = value;
-          }
+      if (screenType == ScreenType.full) {
+        final model = context.read<FullSearchingData>();
+        if (typeOfProvider == ProviderType.fullFilesSearch) {
+          model.controllers[index!].regionToSearch = value;
+        } else if (typeOfProvider == ProviderType.fullTextSearch) {
+          model.textItem.regionToSearch = value;
+        }
+      } else {
+        final model = context.read<MiniSearchingData>();
+        model.controllers.regionToSearch = value;
       }
+      controller.text = '';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const textStyle = TextStyle(
-      fontSize: 20,
+    final textStyle = TextStyle(
+      fontSize: fontItembuilderSize,
       fontWeight: FontWeight.w700,
     );
 
@@ -93,7 +105,7 @@ class DropDownListWidget extends StatelessWidget {
               );
             },
             emptyBuilder: (context, searchEntry) {
-              return const Center(
+              return Center(
                 child: Text('Ничего не найдено', style: textStyle),
               );
             },
@@ -103,7 +115,7 @@ class DropDownListWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             textAlignVertical: TextAlignVertical.center,
             baseStyle: TextStyle(
-              fontSize: fontSize,
+              fontSize: fontSelectedSize,
               fontWeight: FontWeight.w700,
               overflow: overflow,
             ),

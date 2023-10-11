@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-
 import 'package:phone_corrector/domain/models/models.dart';
 
 class PersonFileModel extends Equatable {
@@ -38,12 +37,13 @@ class PersonFileModel extends Equatable {
         fileFounded,
       ];
 
-  PersonFileModel copyWith(
-      {String? name,
-      List<String>? allPhones,
-      List<SinglePersonModel>? allPersonModels,
-      PersonStateModel? stateModel,
-      bool? fileFounded}) {
+  PersonFileModel copyWith({
+    String? name,
+    List<String>? allPhones,
+    List<SinglePersonModel>? allPersonModels,
+    PersonStateModel? stateModel,
+    bool? fileFounded,
+  }) {
     return PersonFileModel(
       name: name ?? this.name,
       allPhones: allPhones ?? this.allPhones,

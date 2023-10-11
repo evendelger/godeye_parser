@@ -62,29 +62,48 @@ class FileSearchBloc extends Bloc<FileSearchEvent, FileSearchState> {
       state.models[event.index] = state.models[event.index].copyWith(
         name: event.name,
       );
-      state.models[event.index].stateModel.regionStatus =
-          SearchStatus.inProgress;
-      emit(FileSearchState(models: state.models));
-      await _examineFile(event.index);
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(regionStatus: SearchStatus.inProgress);
+
+      emit(FilesSingleState(
+        models: state.models,
+        model: state.models[event.index],
+        index: event.index,
+      ));
+      await _examineFile(event.index, event.name);
     }
     if (!state.models[event.index].fileFounded) {
-      state.models[event.index].stateModel.regionStatus = SearchStatus.error;
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(regionStatus: SearchStatus.error);
       emit(FilesStatusMessage(models: state.models, message: "Файл не найден"));
       return;
     }
-    state.models[event.index].stateModel.regionStatus = SearchStatus.inProgress;
+    state.models[event.index].stateModel.statuses = state
+        .models[event.index].stateModel.statuses
+        .copyWith(regionStatus: SearchStatus.inProgress);
     state.models[event.index].stateModel.regionToSearch = event.region;
-    emit(FileSearchState(models: state.models));
+    emit(FilesSingleState(
+      models: state.models,
+      model: state.models[event.index],
+      index: event.index,
+    ));
 
     final correctedPhones = phonesRepository.searchByRegion(
       state.models[event.index],
       event.region,
     );
     state.models[event.index].stateModel.regionPhones = correctedPhones;
-    state.models[event.index].stateModel.regionStatus = SearchStatus.success;
-    emit(FilesStatusMessage(
-        models: state.models,
-        message: "${event.name} - выполнен поиск по региону"));
+    state.models[event.index].stateModel.statuses = state
+        .models[event.index].stateModel.statuses
+        .copyWith(regionStatus: SearchStatus.success);
+
+    emit(FilesSingleState(
+      models: state.models,
+      model: state.models[event.index],
+      index: event.index,
+    ));
   }
 
   Future<void> _searchByCity(
@@ -92,12 +111,20 @@ class FileSearchBloc extends Bloc<FileSearchEvent, FileSearchState> {
     Emitter<FileSearchState> emit,
   ) async {
     if (!state.models[event.index].fileWasExamined) {
-      state.models[event.index].stateModel.cityStatus = SearchStatus.inProgress;
-      emit(FileSearchState(models: state.models));
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(cityStatus: SearchStatus.inProgress);
+      emit(FilesSingleState(
+        models: state.models,
+        model: state.models[event.index],
+        index: event.index,
+      ));
       await _examineFile(event.index, event.name);
     }
     if (!state.models[event.index].fileFounded) {
-      state.models[event.index].stateModel.cityStatus = SearchStatus.error;
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(cityStatus: SearchStatus.error);
       emit(FilesStatusMessage(models: state.models, message: "Файл не найден"));
       return;
     }
@@ -107,8 +134,14 @@ class FileSearchBloc extends Bloc<FileSearchEvent, FileSearchState> {
 
     state.models[event.index].stateModel.cityRegionPhones = phonesTuple.$1;
     state.models[event.index].stateModel.cityPhones = phonesTuple.$2;
-    state.models[event.index].stateModel.cityStatus = SearchStatus.success;
-    emit(FileSearchState(models: state.models));
+    state.models[event.index].stateModel.statuses = state
+        .models[event.index].stateModel.statuses
+        .copyWith(cityStatus: SearchStatus.success);
+    emit(FilesSingleState(
+      models: state.models,
+      model: state.models[event.index],
+      index: event.index,
+    ));
   }
 
   Future<void> _searchByExperience(
@@ -116,14 +149,20 @@ class FileSearchBloc extends Bloc<FileSearchEvent, FileSearchState> {
     Emitter<FileSearchState> emit,
   ) async {
     if (!state.models[event.index].fileWasExamined) {
-      state.models[event.index].stateModel.experienceStatus =
-          SearchStatus.inProgress;
-      emit(FileSearchState(models: state.models));
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(experienceStatus: SearchStatus.inProgress);
+      emit(FilesSingleState(
+        models: state.models,
+        model: state.models[event.index],
+        index: event.index,
+      ));
       await _examineFile(event.index, event.name);
     }
     if (!state.models[event.index].fileFounded) {
-      state.models[event.index].stateModel.experienceStatus =
-          SearchStatus.error;
+      state.models[event.index].stateModel.statuses = state
+          .models[event.index].stateModel.statuses
+          .copyWith(experienceStatus: SearchStatus.error);
       emit(FilesStatusMessage(models: state.models, message: "Файл не найден"));
       return;
     }
@@ -135,8 +174,14 @@ class FileSearchBloc extends Bloc<FileSearchEvent, FileSearchState> {
         phonesTuple.$1;
     state.models[event.index].stateModel.experiencePhones = phonesTuple.$2;
 
-    state.models[event.index].stateModel.experienceStatus =
-        SearchStatus.success;
-    emit(FileSearchState(models: state.models));
+    state.models[event.index].stateModel.statuses = state
+        .models[event.index].stateModel.statuses
+        .copyWith(experienceStatus: SearchStatus.success);
+
+    emit(FilesSingleState(
+      models: state.models,
+      model: state.models[event.index],
+      index: event.index,
+    ));
   }
 }

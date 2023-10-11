@@ -34,7 +34,7 @@ class _MainPageState extends State<MainPage> {
       count,
       duration: duration,
     );
-    context.read<SearchingDataList>().addItems(count);
+    context.read<FullSearchingData>().addItems(count);
   }
 
   void _clearList() {
@@ -42,7 +42,7 @@ class _MainPageState extends State<MainPage> {
         .removeAllItems((context, animation) => const SizedBox.shrink());
 
     context.read<FileSearchBloc>().add(const ClearList());
-    context.read<SearchingDataList>().clearList();
+    context.read<FullSearchingData>().clearList();
     Future.microtask(
       () => {
         for (int i = 0;
@@ -94,7 +94,7 @@ class _MainPageState extends State<MainPage> {
                 controller: _scrollController,
                 key: _animatedListKey,
                 initialItemCount:
-                    context.read<SearchingDataList>().listOfControllers.length,
+                    context.read<FullSearchingData>().controllers.length,
                 itemBuilder: (context, index, animation) {
                   return AnimatedListItem(
                     index: index,

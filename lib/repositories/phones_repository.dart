@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
@@ -22,21 +21,31 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   static final datePattern = RegExp(r'\d{2}\.\d{2}\.\d{4}');
   static final phonePattern = RegExp(r'(7|8)9\d{9}');
 
-  List<String> _getPhonesList(Element blockInfoList) {
+  List<String> _getPhonesFromBlock(Element blockInfoList) {
     final phoneList = <String>[];
 
     try {
-      final phoneBlock = blockInfoList.children
-          .firstWhere((e) => e.children[0].text == "Телефоны:");
+      final phoneBlock = blockInfoList.children.firstWhere((e) =>
+          e.children[0].text == "Телефоны:" ||
+          e.children[0].text == "Телефон:");
       phoneList.addAll(phoneBlock.children[1].text.split(', ').where(
             (phone) =>
                 phone.length == 11 && phone.startsWith('79') ||
                 phone.startsWith('89'),
           ));
     } catch (e) {
-      log(e.toString());
       return phoneList;
     }
+    return phoneList;
+  }
+
+  List<String> _getPhonesFromResultPage(List<SinglePersonModel> models) {
+    final phoneList = <String>[];
+
+    for (var model in models) {
+      phoneList.addAll(model.phoneNumbersList);
+    }
+
     return phoneList;
   }
 
@@ -49,6 +58,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
 
       var blockModel = BlockFileInfoModel();
       for (var dataMap in contentList.children) {
+        if (dataMap.children.length < 2) continue;
         final title = dataMap.children[0].text;
 
         if (title == "День рождения:") {
@@ -136,11 +146,14 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
 
     final blocksDataList =
         document.getElementsByClassName("result_search_page")[0].children;
+
     final blockSummary =
         document.getElementById("menuSvodka")?.children[0].children[1];
 
-    final allPhonesList = _getPhonesList(blockSummary!);
     final modelsAfterSearching = _collectModels(blocksDataList);
+    final allPhonesList = blockSummary == null
+        ? _getPhonesFromResultPage(modelsAfterSearching)
+        : _getPhonesFromBlock(blockSummary);
 
     return PersonFileModel(
       name: name,
@@ -187,14 +200,20 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
 
       if (correctCity != 'empty') {
         if (model.stateModel.regionPhones != null) {
-          final correctPhones =
+          final foundedRCPhones =
               model.allPersonModels![i].phoneNumbersList.where(
             (phone) => model.stateModel.regionPhones!.contains(phone),
           );
-          cityRegionPhones.addAll(correctPhones);
+          final setPhones =
+              Set<String>.from(model.allPersonModels![i].phoneNumbersList);
+          final foundedCityPhones =
+              setPhones.difference(foundedRCPhones.toSet()).toList();
+          cityRegionPhones.addAll(foundedRCPhones);
+          cityPhones.addAll(foundedCityPhones);
+        } else {
+          final correctPhones = model.allPersonModels![i].phoneNumbersList;
+          cityPhones.addAll(correctPhones);
         }
-        final correctPhones = model.allPersonModels![i].phoneNumbersList;
-        cityPhones.addAll(correctPhones);
       }
     }
 
@@ -219,21 +238,34 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
           differenceInYears;
 
       if (isCorrectedDate) {
-        if (model.stateModel.regionPhones != null) {
-          final correctedPhones = singleModel.phoneNumbersList.where(
-            (phone) => model.stateModel.regionPhones!.contains(phone),
-          );
-          if (correctedPhones.isEmpty) continue;
-          experienceRegionPhones.add({
-            DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
-                correctedPhones.toList()
-          });
-        } else {
-          final allPhones = singleModel.phoneNumbersList;
+        if (model.stateModel.regionPhones == null) {
           experiencePhones.add({
             DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
-                allPhones.toList()
+                singleModel.phoneNumbersList.toList()
           });
+        } else {
+          final expRegPhonesSet = singleModel.phoneNumbersList
+              .where(
+                (phone) => model.stateModel.regionPhones!.contains(phone),
+              )
+              .toSet();
+          final setOfAllPhonesList =
+              Set<String>.from(singleModel.phoneNumbersList);
+          final expPhones =
+              setOfAllPhonesList.difference(expRegPhonesSet).toList();
+
+          if (expRegPhonesSet.isNotEmpty) {
+            experienceRegionPhones.add({
+              DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
+                  expRegPhonesSet.toList()
+            });
+          }
+          if (expPhones.isNotEmpty) {
+            experiencePhones.add({
+              DateFormat('dd-MM-yyyy').format(singleModel.dateOfBirth!):
+                  expPhones.toList()
+            });
+          }
         }
       }
     }

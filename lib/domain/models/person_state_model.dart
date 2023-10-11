@@ -1,3 +1,5 @@
+import 'package:equatable/equatable.dart';
+
 typedef MapList = List<Map<String, List<String>>>;
 
 enum SearchStatus {
@@ -8,16 +10,46 @@ enum SearchStatus {
 }
 
 class PersonStateModel {
-  SearchStatus regionStatus = SearchStatus.waiting;
+  var statuses = const Statuses(
+    regionStatus: SearchStatus.waiting,
+    cityStatus: SearchStatus.waiting,
+    experienceStatus: SearchStatus.waiting,
+  );
+
   String? regionToSearch;
   List<String>? regionPhones;
 
-  SearchStatus cityStatus = SearchStatus.waiting;
   List<String>? cityRegionPhones;
   List<String>? cityPhones;
 
-  SearchStatus experienceStatus = SearchStatus.waiting;
   String? experienceToSearch;
   MapList? experienceRegionPhones;
   MapList? experiencePhones;
+}
+
+class Statuses extends Equatable {
+  const Statuses({
+    required this.regionStatus,
+    required this.cityStatus,
+    required this.experienceStatus,
+  });
+
+  final SearchStatus regionStatus;
+  final SearchStatus cityStatus;
+  final SearchStatus experienceStatus;
+
+  @override
+  List<Object?> get props => [regionStatus, cityStatus, experienceStatus];
+
+  Statuses copyWith({
+    SearchStatus? regionStatus,
+    SearchStatus? cityStatus,
+    SearchStatus? experienceStatus,
+  }) {
+    return Statuses(
+      regionStatus: regionStatus ?? this.regionStatus,
+      cityStatus: cityStatus ?? this.cityStatus,
+      experienceStatus: experienceStatus ?? this.experienceStatus,
+    );
+  }
 }

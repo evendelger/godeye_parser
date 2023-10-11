@@ -27,6 +27,21 @@ class FileSearchState extends Equatable {
   List<Object?> get props => [models];
 }
 
+// для МНОГОКРАТНОГО уменьшения ребилдов иконок статуса
+class FilesSingleState extends FileSearchState {
+  const FilesSingleState({
+    required super.models,
+    required this.model,
+    required this.index,
+  });
+
+  final int index;
+  final PersonFileModel model;
+
+  @override
+  List<Object?> get props => [index, model];
+}
+
 class FilesStatusMessage extends FileSearchState {
   const FilesStatusMessage({required super.models, required this.message});
 

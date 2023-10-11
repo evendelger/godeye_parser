@@ -1,13 +1,13 @@
-part of 'text_bloc.dart';
+part of 'text_search_bloc.dart';
 
-sealed class TextEvent extends Equatable {
-  const TextEvent();
+sealed class TextSearchEvent extends Equatable {
+  const TextSearchEvent();
 
   @override
   List<Object> get props => [];
 }
 
-final class SearchByRegion extends TextEvent {
+final class SearchByRegion extends TextSearchEvent {
   const SearchByRegion({required this.text, required this.region});
 
   final String text;

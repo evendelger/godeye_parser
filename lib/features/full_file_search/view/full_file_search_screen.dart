@@ -110,7 +110,7 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
       StorageSizeValue.miniSize.value,
     );
     await Navigator.of(context)
-        .popAndPushNamed(MainNavigationRouteNames.miniSizeApp);
+        .popAndPushNamed(MainNavigationRouteNames.miniSizeScreen);
   }
 
   @override
@@ -124,12 +124,12 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
           ),
         ),
-        Provider<SearchingDataList>(
-          create: (_) => SearchingDataList.init(),
+        Provider<FullSearchingData>(
+          create: (_) => FullSearchingData.init(),
           lazy: false,
         ),
-        Provider<TextBloc>(
-          create: (_) => TextBloc(
+        Provider<TextSearchBloc>(
+          create: (_) => TextSearchBloc(
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
           ),
         ),
