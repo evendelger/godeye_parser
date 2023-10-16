@@ -1,11 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phone_corrector/domain/data/regions_data.dart';
-import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/features/full_file_search/full_file_search.dart';
-import 'package:phone_corrector/ui/widgets/widgets.dart';
+import 'package:godeye_parser/domain/data/regions_data.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
+import 'package:godeye_parser/ui/widgets/widgets.dart';
 
 enum SearchType {
   region,
@@ -57,16 +56,18 @@ class _ListItemState extends State<ListItem> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _RowIndex(index: widget.index),
-          CustomTextField(
-            searchingDataType: SearchingDataType.full,
-            index: widget.index,
-            width: 350,
-            controller: nameController,
-            hintText: 'Введите ФИО',
-            parseType: ParseType.name,
-            height: null,
-            fontSize: 18,
-            maxLines: 1,
+          Expanded(
+            child: CustomTextField(
+              searchingDataType: SearchingDataType.full,
+              index: widget.index,
+              width: null,
+              controller: nameController,
+              hintText: 'Введите ФИО',
+              parseType: ParseType.name,
+              height: null,
+              fontSize: 18,
+              maxLines: 1,
+            ),
           ),
           const SizedBox(width: 10),
           _RowRegionSearch(index: widget.index),
@@ -101,7 +102,7 @@ class _ClearButton extends StatelessWidget {
   final int index;
 
   void _clearItem(BuildContext context, int index) {
-    context.read<FileSearchBloc>().add(ClearItem(index: index));
+    context.read<FullSearchBloc>().add(ClearItem(index: index));
     for (var c in controllers) {
       c.clear();
     }
@@ -115,7 +116,7 @@ class _ClearButton extends StatelessWidget {
       icon: Icon(
         Icons.delete,
         size: 35,
-        color: Colors.red.shade400,
+        color: ColorsList.deleteColor,
       ),
     );
   }
@@ -134,39 +135,31 @@ class _RowIconsStatus extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        color: Colors.black12,
+        color: ColorsList.blockBackgroundColor,
         border: Border.all(
-          color: Colors.black,
+          color: ColorsList.blockBackgroundColor,
           width: 1,
         ),
       ),
       padding: const EdgeInsets.all(5),
-      child: BlocBuilder<FileSearchBloc, FileSearchState>(
-        buildWhen: (previous, current) {
-          if (current is FilesSingleState && current.index == index) {
-            return true;
-          }
-          return false;
-        },
-        builder: (context, state) {
-          final stateModel = state.models[index].stateModel;
-          return Row(
-            children: [
-              _SingleIconStatus(
-                icon: Icons.person,
-                searchStatus: stateModel.statuses.regionStatus,
-              ),
-              _SingleIconStatus(
-                icon: Icons.location_city,
-                searchStatus: stateModel.statuses.cityStatus,
-              ),
-              _SingleIconStatus(
-                icon: Icons.work,
-                searchStatus: stateModel.statuses.experienceStatus,
-              ),
-            ],
-          );
-        },
+      child: Row(
+        children: [
+          _SingleIconStatus(
+            icon: Icons.person,
+            index: index,
+            searchType: SearchType.region,
+          ),
+          _SingleIconStatus(
+            icon: Icons.location_city,
+            index: index,
+            searchType: SearchType.city,
+          ),
+          _SingleIconStatus(
+            icon: Icons.work,
+            index: index,
+            searchType: SearchType.experience,
+          ),
+        ],
       ),
     );
   }
@@ -176,31 +169,68 @@ class _SingleIconStatus extends StatelessWidget {
   const _SingleIconStatus({
     super.key,
     required this.icon,
-    required this.searchStatus,
+    required this.index,
+    required this.searchType,
   });
 
   final IconData icon;
-  final SearchStatus searchStatus;
+  final int index;
+  final SearchType searchType;
 
-  Color _getColor() {
+  Color _getColor(PersonStateModel stateModel) {
+    final searchStatus = switch (searchType) {
+      SearchType.region => stateModel.statuses.regionStatus,
+      SearchType.city => stateModel.statuses.cityStatus,
+      SearchType.experience => stateModel.statuses.experienceStatus,
+    };
+
     switch (searchStatus) {
       case SearchStatus.waiting:
-        return Colors.black;
+        return ColorsList.waitingColor;
       case SearchStatus.inProgress:
-        return Colors.yellow.shade800;
+        return ColorsList.progressColor;
       case SearchStatus.success:
-        return Colors.greenAccent.shade700;
+        return ColorsList.successColor;
       case SearchStatus.error:
-        return Colors.red;
+        return ColorsList.errorColor;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      color: _getColor(),
-      size: 35,
+    return BlocBuilder<FullSearchBloc, FullSearchState>(
+      buildWhen: (previous, current) {
+        if (current is FileSearchInProgress &&
+            current.index == index &&
+            current.searchType == searchType) return true;
+        if (current is FileSearchFailed &&
+            current.index == index &&
+            current.searchType == searchType) return true;
+
+        switch (searchType) {
+          case SearchType.region:
+            if (current is FileSearchRegionInfo && current.index == index) {
+              return true;
+            }
+          case SearchType.city:
+            if (current is FileSearchCityInfo && current.index == index) {
+              return true;
+            }
+          case SearchType.experience:
+            if (current is FileSearchExperienceInfo && current.index == index) {
+              return true;
+            }
+        }
+        return false;
+      },
+      builder: (context, state) {
+        final stateModel = state.models[index].stateModel;
+        return Icon(
+          icon,
+          color: _getColor(stateModel),
+          size: 35,
+        );
+      },
     );
   }
 }
@@ -284,13 +314,13 @@ class _RowIndex extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF364091).withOpacity(0.25),
-        border: Border.all(width: 1, color: Colors.black.withOpacity(0.5)),
+        color: ColorsList.primaryWithMediumOpacity,
+        border: Border.all(width: 1, color: ColorsList.blackWithMediumOpacity),
       ),
       child: Text(
         '${index + 1}',
         textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.black, fontSize: 18),
+        style: const TextStyle(fontSize: 18),
       ),
     );
   }
@@ -337,7 +367,7 @@ class _SearchButton extends StatelessWidget {
 
   void _search(BuildContext context) {
     final itemModel = context.read<FullSearchingData>().controllers[index];
-    final bloc = context.read<FileSearchBloc>();
+    final bloc = context.read<FullSearchBloc>();
 
     switch (searchType) {
       case SearchType.region:
@@ -383,11 +413,11 @@ class _SearchButton extends StatelessWidget {
     _showDialog(context, bloc);
   }
 
-  void _showDialog(BuildContext context, FileSearchBloc bloc) {
+  void _showDialog(BuildContext context, FullSearchBloc bloc) {
     showDialog(
       context: context,
       builder: (_) {
-        return BlocProvider<FileSearchBloc>.value(
+        return BlocProvider<FullSearchBloc>.value(
           value: bloc,
           child: _AlertDialog(searchType: searchType, index: index),
         );
@@ -419,12 +449,21 @@ class _ShowButton extends StatelessWidget {
   final int index;
 
   void _showDialog(BuildContext context) {
-    final bloc = context.read<FileSearchBloc>();
+    final bloc = context.read<FullSearchBloc>();
+
+    switch (searchType) {
+      case SearchType.region:
+        bloc.add(ShowRegionData(index: index));
+      case SearchType.city:
+        bloc.add(ShowCityData(index: index));
+      case SearchType.experience:
+        bloc.add(ShowExperienceData(index: index));
+    }
 
     showDialog(
       context: context,
       builder: (_) {
-        return BlocProvider<FileSearchBloc>.value(
+        return BlocProvider<FullSearchBloc>.value(
           value: bloc,
           child: _AlertDialog(searchType: searchType, index: index),
         );
@@ -455,60 +494,7 @@ class _AlertDialog extends StatelessWidget {
   final int index;
   final SearchType searchType;
 
-  Widget _switchSearchType(PersonFileModel model) {
-    switch (searchType) {
-      case SearchType.region:
-        return _switchRegionStatus(model);
-      case SearchType.city:
-        return _switchCityStatus(model);
-      case SearchType.experience:
-        return _switchExperienceStatus(model);
-    }
-  }
-
-  Widget _switchRegionStatus(PersonFileModel model) {
-    switch (model.stateModel.statuses.regionStatus) {
-      case SearchStatus.waiting:
-        return _textMessage('Начните поиск');
-      case SearchStatus.inProgress:
-        return _progressIndicator();
-      case SearchStatus.success:
-        return RegionInfoWidget(
-          regionPhones: model.stateModel.regionPhones!,
-          allPhones: model.allPhones!,
-        );
-      case SearchStatus.error:
-        return _textMessage('Файл не найден, проверьте корректность ФИО');
-    }
-  }
-
-  Widget _switchCityStatus(PersonFileModel model) {
-    switch (model.stateModel.statuses.cityStatus) {
-      case SearchStatus.waiting:
-        return _textMessage('Начните поиск');
-      case SearchStatus.inProgress:
-        return _progressIndicator();
-      case SearchStatus.success:
-        return _cityInfo(model);
-      case SearchStatus.error:
-        return _textMessage('Файл не найден, проверьте корректность ФИО');
-    }
-  }
-
-  Widget _switchExperienceStatus(PersonFileModel model) {
-    switch (model.stateModel.statuses.experienceStatus) {
-      case SearchStatus.waiting:
-        return _textMessage('Начните поиск');
-      case SearchStatus.inProgress:
-        return _progressIndicator();
-      case SearchStatus.success:
-        return _experienceInfo(model);
-      case SearchStatus.error:
-        return _textMessage('Файл не найден, проверьте корректность ФИО');
-    }
-  }
-
-  List<Widget> _title(ThemeData theme, FileSearchState state) {
+  List<Widget> _title(ThemeData theme, FullSearchState state) {
     String getFullRegion(String shortRegion) {
       const map = DrowDownRegionsData.regionMap;
       return map.keys.firstWhere(
@@ -520,26 +506,19 @@ class _AlertDialog extends StatelessWidget {
     return [
       Text(
         'Найденные телефоны',
-        style: theme.textTheme.titleMedium,
+        style: theme.textTheme.bodyLarge,
       ),
       state.models[index].name.isEmpty
           ? const SizedBox.shrink()
           : Text(
               state.models[index].name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.primaryColor.withOpacity(0.9),
-                letterSpacing: 0.1,
-              ),
+              style: theme.textTheme.titleLarge,
             ),
       state.models[index].stateModel.regionToSearch == null
           ? const SizedBox.shrink()
           : Text(
               getFullRegion(state.models[index].stateModel.regionToSearch!),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 20,
-                color: theme.primaryColor.withOpacity(0.8),
-                letterSpacing: 0.1,
-              ),
+              style: theme.textTheme.titleMedium,
             ),
     ];
   }
@@ -548,8 +527,42 @@ class _AlertDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocBuilder<FileSearchBloc, FileSearchState>(
+    return BlocBuilder<FullSearchBloc, FullSearchState>(
       builder: (context, state) {
+        child() {
+          if (state is FileSearchEmpty) {
+            return const SearchEmpty();
+          } else if (state is FileSearchInProgress) {
+            return const SearchInProgress();
+          } else if (state is FileSearchFailed) {
+            return const SearchFailed();
+          } else if (state is FileSearchRegionInfo) {
+            return SearchSuccessRegion(
+              regionPhones: state.regionPhones,
+              allPhones: state.allPhones,
+              isFullScreen: true,
+            );
+          } else if (state is FileSearchCityInfo) {
+            return SearchSuccessCity(
+              cityRegionPhones: state.cityRegionPhones,
+              cityPhones: state.cityPhones,
+              allPhones: state.allPhones,
+              isFullScreen: true,
+            );
+          } else if (state is FileSearchExperienceInfo) {
+            return SearchSuccessExperience(
+              experienceToSearch: state.experienceToSearch,
+              experienceRegionPhones: state.experienceRegionPhones,
+              experiencePhones: state.experiencePhones,
+              allPhones: state.allPhones,
+              phonesWithoutDate: state.phonesWithoutDate,
+              isFullScreen: true,
+              regionPhonesWithoutDate: state.regionPhonesWithoutDate,
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
         return AlertDialog(
           title: Column(
             children: _title(theme, state),
@@ -557,283 +570,10 @@ class _AlertDialog extends StatelessWidget {
           content: SizedBox(
             height: 600,
             width: 600,
-            child: _switchSearchType(state.models[index]),
+            child: child.call(),
           ),
         );
       },
-    );
-  }
-
-  Center _progressIndicator() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
-  }
-
-  Center _textMessage(String text) {
-    return Center(
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-    );
-  }
-
-  ListView _cityInfo(PersonFileModel model) {
-    return ListView(
-      children: [
-        Row(
-          children: [
-            const SizedBox(width: 30),
-            _summaryInfoBlock(
-              'Город и Регион',
-              model.stateModel.cityRegionPhones!,
-              Colors.green.shade700,
-            ),
-            const SizedBox(width: 30),
-            _summaryInfoBlock(
-              'Город',
-              model.stateModel.cityPhones!,
-              Colors.pink,
-            ),
-            const SizedBox(width: 100),
-            _summaryInfoBlock(
-              'Всего',
-              model.allPhones!,
-              Colors.black87,
-            ),
-          ],
-        ),
-        const SizedBox(height: 30),
-        _allInfoBlock(
-          'Город и регион',
-          model.stateModel.cityRegionPhones!,
-          Colors.green.shade700,
-        ),
-        const SizedBox(height: 10),
-        _allInfoBlock(
-          'Город',
-          model.stateModel.cityPhones!,
-          Colors.pink,
-        ),
-        const SizedBox(height: 10),
-        _allInfoBlock(
-          'Всего',
-          model.allPhones!,
-          Colors.black87,
-        ),
-      ],
-    );
-  }
-
-  ListView _experienceInfo(PersonFileModel model) {
-    return ListView(
-      children: [
-        Row(
-          children: [
-            const SizedBox(width: 30),
-            _summaryInfoBlock(
-              'Стаж и Регион',
-              model.stateModel.experienceRegionPhones!
-                  .map((e) => e.values.expand((x) => x))
-                  .expand((x) => x)
-                  .toList(),
-              Colors.green.shade700,
-            ),
-            const SizedBox(width: 30),
-            _summaryInfoBlock(
-              'Стаж',
-              model.stateModel.experiencePhones!
-                  .map((e) => e.values.expand((x) => x))
-                  .expand((x) => x)
-                  .toList(),
-              Colors.pink,
-            ),
-            const SizedBox(width: 100),
-            _summaryInfoBlock(
-              'Всего',
-              model.allPhones!,
-              Colors.black87,
-            ),
-          ],
-        ),
-        const SizedBox(height: 30),
-        _allInfoBlock(
-          'Стаж и регион',
-          model.stateModel.experienceRegionPhones!,
-          Colors.green.shade700,
-          model.stateModel.experienceToSearch,
-        ),
-        const SizedBox(height: 10),
-        _allInfoBlock(
-          'Стаж',
-          model.stateModel.experiencePhones!,
-          Colors.pink,
-          model.stateModel.experienceToSearch,
-        ),
-        const SizedBox(height: 10),
-        _allInfoBlock('Всего', model.allPhones!, Colors.black87),
-      ],
-    );
-  }
-
-  int parseSubstring(String line) => int.parse(line.substring(6, 10));
-
-  Column _allInfoBlock(
-    String title,
-    List content,
-    Color color, [
-    String? experienceToSearch,
-  ]) {
-    final textStyle = TextStyle(
-      fontSize: 21,
-      fontWeight: FontWeight.w700,
-      color: color,
-    );
-
-    InkWell phoneCopyableText(String phone, [Color? newColor]) {
-      return InkWell(
-        onTap: () async => await Clipboard.setData(ClipboardData(text: phone)),
-        overlayColor: MaterialStatePropertyAll(color.withOpacity(0.07)),
-        child: Text(
-          phone,
-          style: textStyle.copyWith(color: newColor),
-        ),
-      );
-    }
-
-    List<Widget> listOfPhones([List? newContent, Color? newColor]) {
-      if (newContent != null) {
-        return List<Widget>.generate(newContent.length,
-            (i) => phoneCopyableText(newContent[i], newColor));
-      }
-      return List<Widget>.generate(
-          content.length, (i) => phoneCopyableText(content[i]));
-    }
-
-    const greenColorsMap = {
-      0: Color(0xFF388E3C),
-      1: Color(0xFF317E35),
-      2: Color(0xFF2A6D2D),
-      3: Color(0xFF245D26),
-      4: Color(0xFF1D4D1F),
-      5: Color(0xFF163C17),
-    };
-
-    const redColorsMap = {
-      0: Color(0xFFE91E63),
-      1: Color(0xFFD51C5B),
-      2: Color(0xFFC11952),
-      3: Color(0xFFAE174A),
-      4: Color(0xFF9A1542),
-      5: Color(0xFF861239),
-    };
-
-    List<SizedBox> listOfMappedPhones() {
-      const int trueDiff = 5;
-      final rowMap = <String, List<String>>{};
-
-      for (var element in (content as List<Map<String, List<String>>>)) {
-        final date = element.keys.first;
-        final difference = (DateTime.now().year -
-                (parseSubstring(date) + int.parse(experienceToSearch!) + 23))
-            .abs();
-        if (difference <= trueDiff) {
-          rowMap[date] = element.values.toList()[0];
-        }
-      }
-      if (rowMap.isEmpty) return List<SizedBox>.empty();
-
-      return List<SizedBox>.generate(rowMap.length, (index) {
-        final key = rowMap.keys.toList()[index];
-        final values = rowMap.values.toList()[index];
-        final diff = (DateTime.now().year -
-                (parseSubstring(key) + int.parse(experienceToSearch!) + 23))
-            .abs();
-        final mappedColor = color == Colors.green.shade700
-            ? greenColorsMap[diff]
-            : redColorsMap[diff];
-
-        return SizedBox(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$key - ',
-                style: textStyle.copyWith(color: mappedColor),
-              ),
-              Flexible(
-                child: Wrap(
-                  runAlignment: WrapAlignment.center,
-                  spacing: 10,
-                  children: listOfPhones(values, mappedColor),
-                ),
-              ),
-            ],
-          ),
-        );
-      });
-    }
-
-    return Column(
-      children: [
-        Text(
-          title,
-          style: textStyle,
-        ),
-        const SizedBox(height: 10),
-        content.isEmpty
-            ? Text(
-                'Пусто',
-                style: textStyle.copyWith(fontSize: 14),
-              )
-            : Wrap(
-                spacing: 10,
-                children: experienceToSearch != null
-                    ? listOfMappedPhones()
-                    : listOfPhones(),
-              ),
-      ],
-    );
-  }
-
-  Column _summaryInfoBlock(String title, List list, Color color) {
-    Future<void> copyText() async {
-      final length = list.length >= 3 ? 3 : list.length;
-      final toCopy = [];
-
-      for (int i = 0; i < length; i++) {
-        toCopy.add(list[i]);
-      }
-      await Clipboard.setData(ClipboardData(text: toCopy.join('\t')));
-    }
-
-    final textStyle = TextStyle(
-      fontSize: 26,
-      fontWeight: FontWeight.w700,
-      color: color,
-    );
-
-    return Column(
-      children: [
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: textStyle,
-        ),
-        Text(
-          list.length.toString(),
-          style: textStyle.copyWith(fontSize: 44),
-        ),
-        FilledButton(
-          onPressed: copyText,
-          child: const Icon(Icons.copy),
-        ),
-      ],
     );
   }
 }

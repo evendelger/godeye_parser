@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
+
+import 'package:flutter/services.dart';
 
 class DataProvider {
   DataProvider(this.filesPath) {
@@ -13,10 +14,8 @@ class DataProvider {
   void changePath(String path) => filesPath = path;
 
   Future<void> _convertDataFileToMap() async {
-    final dataFile = File('assets/data.csv');
-    Stream<List> inputStream = dataFile.openRead();
-    final data =
-        inputStream.transform(utf8.decoder).transform(const LineSplitter());
+    final data = Stream.fromFuture(rootBundle.loadString('assets/data.csv'))
+        .transform(const LineSplitter());
 
     await for (var line in data) {
       final row = line.split(';');
@@ -43,9 +42,6 @@ class DataProvider {
   Future<String> readPersonFile(String name) async {
     final file = File(await _getDirectory(name));
     if (file.path.isEmpty) {
-      // TODO: доработать обработку ошибок
-      // выбросить кастомную ошибку
-      log("не удается найти файл");
       return '';
     }
     return await file.readAsString();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phone_corrector/phone_app.dart';
-import 'package:phone_corrector/service_locator.dart';
-import 'package:phone_corrector/services/screen_size_service.dart';
+import 'package:godeye_parser/godeye_parser_app.dart';
+import 'package:godeye_parser/service_locator.dart';
+import 'package:godeye_parser/services/screen_size_service.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -14,6 +14,7 @@ void main() async {
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
+    title: 'GodEye Parser',
     titleBarStyle: TitleBarStyle.normal,
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -21,6 +22,6 @@ void main() async {
     await windowManager.focus();
   });
 
-  const phoneApp = PhoneApp();
+  const phoneApp = GodEyeParserApp();
   runApp(phoneApp);
 }

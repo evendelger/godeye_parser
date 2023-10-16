@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phone_corrector/domain/data/data.dart';
-import 'package:phone_corrector/domain/models/models.dart';
+import 'package:godeye_parser/domain/data/data.dart';
+import 'package:godeye_parser/domain/models/models.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:phone_corrector/features/full_file_search/full_file_search.dart';
-import 'package:phone_corrector/service_locator.dart';
+import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
+import 'package:godeye_parser/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const duration = Duration(milliseconds: 1000);
@@ -21,7 +21,7 @@ class _MainPageState extends State<MainPage> {
   late final ScrollController _scrollController;
 
   void _addToList(int count) {
-    final bloc = context.read<FileSearchBloc>();
+    final bloc = context.read<FullSearchBloc>();
 
     bloc.add(AddItems(count: count));
     _scrollController.animateTo(
@@ -41,12 +41,12 @@ class _MainPageState extends State<MainPage> {
     _animatedListKey.currentState!
         .removeAllItems((context, animation) => const SizedBox.shrink());
 
-    context.read<FileSearchBloc>().add(const ClearList());
+    context.read<FullSearchBloc>().add(const ClearList());
     context.read<FullSearchingData>().clearList();
     Future.microtask(
       () => {
         for (int i = 0;
-            i < context.read<FileSearchBloc>().state.models.length;
+            i < context.read<FullSearchBloc>().state.models.length;
             i++)
           {
             _animatedListKey.currentState!.insertItem(

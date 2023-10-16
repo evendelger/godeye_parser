@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "phone_corrector" "\0"
+            VALUE "FileDescription", "godeye_parser" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "phone_corrector" "\0"
+            VALUE "InternalName", "godeye_parser" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "phone_corrector.exe" "\0"
-            VALUE "ProductName", "phone_corrector" "\0"
+            VALUE "OriginalFilename", "godeye_parser.exe" "\0"
+            VALUE "ProductName", "godeye_parser" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

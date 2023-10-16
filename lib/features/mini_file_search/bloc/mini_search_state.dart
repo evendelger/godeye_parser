@@ -57,12 +57,17 @@ final class MiniSearchExperienceInfo extends MiniSearchState {
     required this.experienceToSearch,
     required this.experienceRegionPhones,
     required this.experiencePhones,
+    required this.regionPhonesWithoutDate,
+    required this.phonesWithoutDate,
     required this.allPhones,
   });
 
   final String experienceToSearch;
   final MapList experienceRegionPhones;
   final MapList experiencePhones;
+  final List<String> regionPhonesWithoutDate;
+
+  final List<String> phonesWithoutDate;
   final List<String> allPhones;
 
   @override
@@ -70,6 +75,8 @@ final class MiniSearchExperienceInfo extends MiniSearchState {
         experienceToSearch,
         experienceRegionPhones,
         experiencePhones,
+        regionPhonesWithoutDate,
+        phonesWithoutDate,
         allPhones,
       ];
 }

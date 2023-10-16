@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:phone_corrector/domain/models/models.dart';
+import 'package:godeye_parser/domain/models/models.dart';
 
 class PersonFileModel extends Equatable {
   const PersonFileModel({

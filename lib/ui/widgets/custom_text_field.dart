@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phone_corrector/domain/models/models.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:provider/provider.dart';
 
 enum SearchingDataType {
@@ -108,11 +109,12 @@ class CustomTextField extends StatelessWidget {
           }
         }
     }
-    //print(controllersModel);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SizedBox(
       height: height,
       width: width,
@@ -121,14 +123,11 @@ class CustomTextField extends StatelessWidget {
         expands: maxLines == null ? true : false,
         maxLines: maxLines,
         onChanged: (value) => _saveControllerValue(context, value),
-        style: TextStyle(
-          letterSpacing: 0.01,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w600,
-        ),
+        style: theme.textTheme.headlineSmall!
+            .copyWith(letterSpacing: 0.01, fontSize: fontSize),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+          hintStyle: TextStyle(color: ColorsList.hintTextFieldColor),
           isDense: true,
           suffixIcon: CupertinoButton(
             onPressed: () => _getAndFormatText(context),
@@ -139,7 +138,7 @@ class CustomTextField extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: Color(0xFF364091),
+              color: ColorsList.primary,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(12),

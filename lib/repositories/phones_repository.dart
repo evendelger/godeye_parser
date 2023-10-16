@@ -3,10 +3,10 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 
-import 'package:phone_corrector/domain/data/data_provider/data_provider.dart';
-import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/repositories/abstract_phones_repository.dart';
-import 'package:phone_corrector/services/phones_service.dart';
+import 'package:godeye_parser/domain/data/data_provider/data_provider.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
+import 'package:godeye_parser/services/phones_service.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
   const PhonesDataRepository({
@@ -52,10 +52,11 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
   List<SinglePersonModel> _collectModels(List<Element> blocksDataList) {
     final personModels = <SinglePersonModel>[];
     final addedPhones = <String>{};
+    final indexSubListFrom =
+        blocksDataList[1].attributes['id'] == 'menuSvodka' ? 2 : 1;
 
-    blocksDataList.sublist(2).forEach((block) {
+    blocksDataList.sublist(indexSubListFrom).forEach((block) {
       final contentList = block.children[0].children[1];
-
       var blockModel = BlockFileInfoModel();
       for (var dataMap in contentList.children) {
         if (dataMap.children.length < 2) continue;
@@ -134,6 +135,31 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
     });
 
     personModels.removeWhere((model) => model.phoneNumbersList.isEmpty);
+
+    final indexToRemove = <int>[];
+
+    for (int i = 0; i < personModels.length; i++) {
+      final sameDateIndex = personModels.indexWhere(
+        (model) =>
+            model.dateOfBirth != null &&
+            model.dateOfBirth == personModels[i].dateOfBirth,
+        i + 1,
+      );
+      if (sameDateIndex != -1) {
+        personModels[sameDateIndex]
+            .adressesList
+            .addAll(personModels[i].adressesList);
+        personModels[sameDateIndex]
+            .phoneNumbersList
+            .addAll(personModels[i].phoneNumbersList);
+        indexToRemove.add(i);
+      }
+    }
+    personModels.retainWhere(
+      (model) => !indexToRemove.contains(
+        personModels.indexWhere((model2) => model2 == model),
+      ),
+    );
 
     return personModels;
   }

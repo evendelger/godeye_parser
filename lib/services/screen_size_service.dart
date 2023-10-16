@@ -1,17 +1,19 @@
 import 'dart:ui';
 
-import 'package:phone_corrector/domain/data/storage_keys.dart';
-import 'package:phone_corrector/service_locator.dart';
+import 'package:godeye_parser/domain/data/storage_keys.dart';
+import 'package:godeye_parser/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum SizeTypes {
+enum _SizeTypes {
   fullWindowInitial(Size(1600, 900)),
-  fullWindowMinimum(Size(1550, 700)),
-  miniWindowInitial(Size(400, 500)),
-  miniWindowMinimum(Size(350, 450));
+  fullWindowMinimum(Size(1400, 720)),
+  fullWindowMaximum(Size(3000, 3000)),
+  miniWindowInitial(Size(425, 500)),
+  miniWindowMinimum(Size(425, 500)),
+  miniWindowMaximum(Size(700, 900));
 
   final Size size;
-  const SizeTypes(this.size);
+  const _SizeTypes(this.size);
 }
 
 class ScreenSizeService {
@@ -30,10 +32,14 @@ class ScreenSizeService {
   }
 
   Size get getInitialSize => isFullSize()
-      ? SizeTypes.fullWindowInitial.size
-      : SizeTypes.miniWindowInitial.size;
+      ? _SizeTypes.fullWindowInitial.size
+      : _SizeTypes.miniWindowInitial.size;
 
   Size get getMinimumSize => isFullSize()
-      ? SizeTypes.fullWindowMinimum.size
-      : SizeTypes.miniWindowMinimum.size;
+      ? _SizeTypes.fullWindowMinimum.size
+      : _SizeTypes.miniWindowMinimum.size;
+
+  Size get getMaximumSize => isFullSize()
+      ? _SizeTypes.fullWindowMaximum.size
+      : _SizeTypes.miniWindowMaximum.size;
 }

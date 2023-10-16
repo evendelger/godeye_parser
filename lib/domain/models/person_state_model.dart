@@ -25,6 +25,8 @@ class PersonStateModel {
   String? experienceToSearch;
   MapList? experienceRegionPhones;
   MapList? experiencePhones;
+  List<String>? regionPhonesWithoutDate;
+  List<String>? phonesWithoutDate;
 }
 
 class Statuses extends Equatable {

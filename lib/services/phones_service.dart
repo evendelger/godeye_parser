@@ -1,4 +1,4 @@
-import 'package:phone_corrector/domain/data/data.dart';
+import 'package:godeye_parser/domain/data/data.dart';
 
 class PhonesService {
   const PhonesService({required this.dataProvider});

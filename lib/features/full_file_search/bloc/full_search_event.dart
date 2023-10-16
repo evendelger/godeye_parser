@@ -1,17 +1,17 @@
-part of 'file_search_bloc.dart';
+part of 'full_search_bloc.dart';
 
-sealed class FileSearchEvent extends Equatable {
-  const FileSearchEvent();
+sealed class FullSearchEvent extends Equatable {
+  const FullSearchEvent();
 
   @override
   List<Object> get props => [];
 }
 
-final class ClearList extends FileSearchEvent {
+final class ClearList extends FullSearchEvent {
   const ClearList();
 }
 
-final class ClearItem extends FileSearchEvent {
+final class ClearItem extends FullSearchEvent {
   const ClearItem({required this.index});
 
   final int index;
@@ -20,7 +20,7 @@ final class ClearItem extends FileSearchEvent {
   List<Object> get props => [index];
 }
 
-final class AddItems extends FileSearchEvent {
+final class AddItems extends FullSearchEvent {
   const AddItems({required this.count});
 
   final int count;
@@ -29,7 +29,7 @@ final class AddItems extends FileSearchEvent {
   List<Object> get props => [count];
 }
 
-final class SearchByRegion extends FileSearchEvent {
+final class SearchByRegion extends FullSearchEvent {
   const SearchByRegion({
     required this.index,
     required this.name,
@@ -44,7 +44,7 @@ final class SearchByRegion extends FileSearchEvent {
   List<Object> get props => [index, name, region];
 }
 
-final class SearchByCity extends FileSearchEvent {
+final class SearchByCity extends FullSearchEvent {
   const SearchByCity({
     required this.index,
     required this.name,
@@ -59,7 +59,7 @@ final class SearchByCity extends FileSearchEvent {
   List<Object> get props => [index, name, city];
 }
 
-final class SearchByExperience extends FileSearchEvent {
+final class SearchByExperience extends FullSearchEvent {
   const SearchByExperience({
     required this.index,
     required this.name,
@@ -72,4 +72,22 @@ final class SearchByExperience extends FileSearchEvent {
 
   @override
   List<Object> get props => [index, name, experience];
+}
+
+final class ShowRegionData extends FullSearchEvent {
+  const ShowRegionData({required this.index});
+
+  final int index;
+}
+
+final class ShowCityData extends FullSearchEvent {
+  const ShowCityData({required this.index});
+
+  final int index;
+}
+
+final class ShowExperienceData extends FullSearchEvent {
+  const ShowExperienceData({required this.index});
+
+  final int index;
 }

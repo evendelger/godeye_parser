@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
 
 class SideBar extends StatelessWidget {
   const SideBar({
@@ -9,7 +10,7 @@ class SideBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 102,
-      color: const Color(0xFF364091),
+      color: ColorsList.primary,
       child: const Padding(
         padding: EdgeInsets.all(10.0),
         child: Stack(
@@ -50,14 +51,15 @@ class _SideBarIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
           onPressed: () {},
           style: ButtonStyle(
-            overlayColor: MaterialStateProperty.all(
-                const Color.fromARGB(255, 28, 26, 56)),
+            overlayColor: MaterialStateProperty.all(ColorsList.darkPrimary),
             iconColor: MaterialStateProperty.all(Colors.white),
           ),
           icon: Icon(
@@ -68,7 +70,7 @@ class _SideBarIcon extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleLarge,
+          style: theme.textTheme.labelSmall,
         ),
       ],
     );

@@ -1,6 +1,6 @@
 {
-    "name": "phone_corrector",
-    "short_name": "phone_corrector",
+    "name": "godeye_parser",
+    "short_name": "godeye_parser",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

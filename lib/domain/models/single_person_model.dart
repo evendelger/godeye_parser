@@ -32,7 +32,7 @@ class SinglePersonModel {
   @override
   String toString() {
     return """
------------------
+\n-----------------
 date - $dateOfBirth
 adresses - $adressesList
 phoneNumbersList - $phoneNumbersList

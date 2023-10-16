@@ -1,35 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phone_corrector/domain/models/models.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
 
-const greenColorsMap = {
-  0: Color(0xFF388E3C),
-  1: Color(0xFF317E35),
-  2: Color(0xFF2A6D2D),
-  3: Color(0xFF245D26),
-  4: Color(0xFF1D4D1F),
-  5: Color(0xFF163C17),
-};
-
-const redColorsMap = {
-  0: Color(0xFFE91E63),
-  1: Color(0xFFD51C5B),
-  2: Color(0xFFC11952),
-  3: Color(0xFFAE174A),
-  4: Color(0xFF9A1542),
-  5: Color(0xFF861239),
-};
-
-final greenColor = Colors.green.shade700;
-const blackColor = Colors.black87;
-const pinkColor = Colors.pink;
-
-class SearchInitial extends StatelessWidget {
-  const SearchInitial({super.key});
+class SearchEmpty extends StatelessWidget {
+  const SearchEmpty({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const _CustomTextMesageWidget(text: 'Начните поиск');
+    return const _CustomTextMesageWidget(text: 'Поиск не выполнен');
   }
 }
 
@@ -38,7 +17,7 @@ class SearchInProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CircularProgressIndicator();
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
@@ -61,11 +40,12 @@ class _CustomTextMesageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall,
       ),
     );
   }
@@ -74,10 +54,12 @@ class _CustomTextMesageWidget extends StatelessWidget {
 class SearchSuccessRegion extends StatelessWidget {
   const SearchSuccessRegion({
     super.key,
+    required this.isFullScreen,
     required this.regionPhones,
     required this.allPhones,
   });
 
+  final bool isFullScreen;
   final List<String> regionPhones;
   final List<String> allPhones;
 
@@ -86,33 +68,39 @@ class SearchSuccessRegion extends StatelessWidget {
     return ListView(
       shrinkWrap: true,
       children: [
+        const SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _summaryInfoBlock(
+              isFullScreen,
               'Регион',
               regionPhones,
-              greenColor,
+              ColorsList.dataGreenColor,
             ),
             _summaryInfoBlock(
+              isFullScreen,
               'Всего',
               allPhones,
-              blackColor,
+              ColorsList.dataBlackColor,
             ),
           ],
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isFullScreen ? 30 : 10),
         _allInfoBlock(
+          isFullScreen,
           'Регион',
           regionPhones,
-          greenColor,
+          ColorsList.dataGreenColor,
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isFullScreen ? 10 : 5),
         _allInfoBlock(
+          isFullScreen,
           'Всего',
           allPhones,
-          blackColor,
+          ColorsList.dataBlackColor,
         ),
+        SizedBox(height: isFullScreen ? 10 : 5),
       ],
     );
   }
@@ -121,11 +109,13 @@ class SearchSuccessRegion extends StatelessWidget {
 class SearchSuccessCity extends StatelessWidget {
   const SearchSuccessCity({
     super.key,
+    required this.isFullScreen,
     required this.cityRegionPhones,
     required this.cityPhones,
     required this.allPhones,
   });
 
+  final bool isFullScreen;
   final List<String> cityRegionPhones;
   final List<String> cityPhones;
   final List<String> allPhones;
@@ -133,44 +123,52 @@ class SearchSuccessCity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      shrinkWrap: true,
       children: [
+        const SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _summaryInfoBlock(
+              isFullScreen,
               'Город и Регион',
               cityRegionPhones,
-              greenColor,
+              ColorsList.dataGreenColor,
             ),
             _summaryInfoBlock(
+              isFullScreen,
               'Город',
               cityPhones,
-              pinkColor,
+              ColorsList.dataPinkColor,
             ),
             _summaryInfoBlock(
+              isFullScreen,
               'Всего',
               allPhones,
-              blackColor,
+              ColorsList.dataBlackColor,
             ),
           ],
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isFullScreen ? 30 : 10),
         _allInfoBlock(
+          isFullScreen,
           'Город и регион',
           cityRegionPhones,
-          greenColor,
+          ColorsList.dataGreenColor,
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isFullScreen ? 10 : 5),
         _allInfoBlock(
+          isFullScreen,
           'Город',
           cityPhones,
-          pinkColor,
+          ColorsList.dataPinkColor,
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isFullScreen ? 10 : 5),
         _allInfoBlock(
+          isFullScreen,
           'Всего',
           allPhones,
-          blackColor,
+          ColorsList.dataBlackColor,
         ),
       ],
     );
@@ -180,75 +178,117 @@ class SearchSuccessCity extends StatelessWidget {
 class SearchSuccessExperience extends StatelessWidget {
   const SearchSuccessExperience({
     super.key,
+    required this.isFullScreen,
     required this.experienceToSearch,
     required this.experienceRegionPhones,
     required this.experiencePhones,
     required this.allPhones,
+    required this.phonesWithoutDate,
+    required this.regionPhonesWithoutDate,
   });
 
+  final bool isFullScreen;
   final String experienceToSearch;
   final MapList experienceRegionPhones;
   final MapList experiencePhones;
   final List<String> allPhones;
+  final List<String> phonesWithoutDate;
+  final List<String> regionPhonesWithoutDate;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
+      shrinkWrap: true,
       children: [
+        const SizedBox(height: 5),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _summaryInfoBlock(
+              isFullScreen,
               'Стаж и Регион',
               experienceRegionPhones
                   .map((e) => e.values.expand((x) => x))
                   .expand((x) => x)
                   .toList(),
-              greenColor,
+              ColorsList.dataGreenColor,
             ),
             _summaryInfoBlock(
+              isFullScreen,
               'Стаж',
               experiencePhones
                   .map((e) => e.values.expand((x) => x))
                   .expand((x) => x)
                   .toList(),
-              pinkColor,
+              ColorsList.dataPinkColor,
             ),
             _summaryInfoBlock(
+              isFullScreen,
+              'Регион без даты',
+              regionPhonesWithoutDate,
+              ColorsList.dataBlueColor,
+            ),
+            _summaryInfoBlock(
+              isFullScreen,
+              'Без даты',
+              phonesWithoutDate,
+              ColorsList.dataOrangeColor,
+            ),
+            _summaryInfoBlock(
+              isFullScreen,
               'Всего',
               allPhones,
-              blackColor,
+              ColorsList.dataBlackColor,
             ),
           ],
         ),
-        const SizedBox(height: 30),
+        SizedBox(height: isFullScreen ? 30 : 10),
         _allInfoBlock(
+          isFullScreen,
           'Стаж и регион',
           experienceRegionPhones,
-          greenColor,
+          ColorsList.dataGreenColor,
           experienceToSearch,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: isFullScreen ? 10 : 5),
         _allInfoBlock(
+          isFullScreen,
           'Стаж',
           experiencePhones,
-          pinkColor,
+          ColorsList.dataPinkColor,
           experienceToSearch,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: isFullScreen ? 10 : 5),
         _allInfoBlock(
+          isFullScreen,
+          'Регион без даты',
+          regionPhonesWithoutDate,
+          ColorsList.dataBlueColor,
+        ),
+        SizedBox(height: isFullScreen ? 10 : 5),
+        _allInfoBlock(
+          isFullScreen,
+          'Без даты',
+          phonesWithoutDate,
+          ColorsList.dataOrangeColor,
+        ),
+        SizedBox(height: isFullScreen ? 10 : 5),
+        _allInfoBlock(
+          isFullScreen,
           'Всего',
           allPhones,
-          blackColor,
+          ColorsList.dataBlackColor,
         ),
+        SizedBox(height: isFullScreen ? 10 : 5),
       ],
     );
   }
 }
 
-int parseSubstring(String line) => int.parse(line.substring(6, 10));
+int _parseSubstring(String line) => int.parse(line.substring(6, 10));
 
-Column _summaryInfoBlock(String title, List list, Color color) {
+Column _summaryInfoBlock(
+    bool isFullScreen, String title, List list, Color color) {
   Future<void> copyText() async {
     final length = list.length >= 3 ? 3 : list.length;
     final toCopy = [];
@@ -260,7 +300,7 @@ Column _summaryInfoBlock(String title, List list, Color color) {
   }
 
   final textStyle = TextStyle(
-    fontSize: 15,
+    fontSize: isFullScreen ? 21 : 13,
     fontWeight: FontWeight.w700,
     color: color,
   );
@@ -275,14 +315,16 @@ Column _summaryInfoBlock(String title, List list, Color color) {
       ),
       Text(
         list.length.toString(),
-        style: textStyle.copyWith(fontSize: 30),
+        style: textStyle.copyWith(fontSize: isFullScreen ? 44 : 30),
       ),
       FilledButton(
         onPressed: copyText,
-        style: const ButtonStyle(
-          iconSize: MaterialStatePropertyAll(20),
-          padding: MaterialStatePropertyAll(EdgeInsets.zero),
-        ),
+        style: isFullScreen
+            ? null
+            : const ButtonStyle(
+                iconSize: MaterialStatePropertyAll(20),
+                padding: MaterialStatePropertyAll(EdgeInsets.zero),
+              ),
         child: const Icon(Icons.copy),
       ),
     ],
@@ -290,13 +332,14 @@ Column _summaryInfoBlock(String title, List list, Color color) {
 }
 
 Column _allInfoBlock(
+  bool isFullScreen,
   String title,
   List content,
   Color color, [
   String? experienceToSearch,
 ]) {
   final textStyle = TextStyle(
-    fontSize: 19,
+    fontSize: isFullScreen ? 21 : 19,
     fontWeight: FontWeight.w700,
     color: color,
   );
@@ -328,7 +371,7 @@ Column _allInfoBlock(
     for (var element in (content as List<Map<String, List<String>>>)) {
       final date = element.keys.first;
       final difference = (DateTime.now().year -
-              (parseSubstring(date) + int.parse(experienceToSearch!) + 23))
+              (_parseSubstring(date) + int.parse(experienceToSearch!) + 23))
           .abs();
       if (difference <= trueDiff) {
         rowMap[date] = element.values.toList()[0];
@@ -340,15 +383,16 @@ Column _allInfoBlock(
       final key = rowMap.keys.toList()[index];
       final values = rowMap.values.toList()[index];
       final diff = (DateTime.now().year -
-              (parseSubstring(key) + int.parse(experienceToSearch!) + 23))
+              (_parseSubstring(key) + int.parse(experienceToSearch!) + 23))
           .abs();
-      final mappedColor = color == Colors.green.shade700
-          ? greenColorsMap[diff]
-          : redColorsMap[diff];
+      final mappedColor = color == ColorsList.dataGreenColor
+          ? ColorsList.greenColorsMap[diff]
+          : ColorsList.redColorsMap[diff];
 
       return SizedBox(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '$key - ',
@@ -373,18 +417,18 @@ Column _allInfoBlock(
         title,
         style: textStyle,
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: isFullScreen ? 10 : 5),
       content.isEmpty
           ? Text(
               'Пусто',
               style: textStyle.copyWith(fontSize: 14),
             )
-          : Wrap(
-              spacing: 10,
-              children: experienceToSearch != null
-                  ? listOfMappedPhones()
-                  : listOfPhones(),
-            ),
+          : experienceToSearch != null
+              ? Column(children: listOfMappedPhones())
+              : Wrap(
+                  spacing: 10,
+                  children: listOfPhones(),
+                ),
     ],
   );
 }

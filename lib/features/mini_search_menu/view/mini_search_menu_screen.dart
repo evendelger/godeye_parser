@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:phone_corrector/domain/data/storage_keys.dart';
-import 'package:phone_corrector/service_locator.dart';
-import 'package:phone_corrector/services/screen_size_service.dart';
-import 'package:phone_corrector/ui/navigation/navigation.dart';
+import 'package:godeye_parser/domain/data/storage_keys.dart';
+import 'package:godeye_parser/features/mini_search_menu/widgets/widgets.dart';
+import 'package:godeye_parser/service_locator.dart';
+import 'package:godeye_parser/services/screen_size_service.dart';
+import 'package:godeye_parser/ui/navigation/navigation.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -16,6 +18,7 @@ class MiniSearchMenuScreen extends StatefulWidget {
 class _MiniSearchMenuScreenState extends State<MiniSearchMenuScreen> {
   @override
   void initState() {
+    windowManager.setMaximumSize(getIt<ScreenSizeService>().getMaximumSize);
     windowManager.setMinimumSize(getIt<ScreenSizeService>().getMinimumSize);
     windowManager.setSize(getIt<ScreenSizeService>().getInitialSize);
     super.initState();
@@ -37,24 +40,24 @@ class _MiniSearchMenuScreenState extends State<MiniSearchMenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: ColorsList.primary,
       body: SizedBox(
         child: Column(
           children: [
-            _CustomListTile(
+            CustomListTile(
               titleText: 'Поиск по файлу',
               icon: Icons.file_open_outlined,
               onTap: () => _navigate(MainNavigationRouteNames.miniFileSearch),
               dividerOnBotom: true,
             ),
-            _CustomListTile(
+            CustomListTile(
               titleText: 'Поиск по тексту',
               icon: Icons.text_fields,
               onTap: () => _navigate(MainNavigationRouteNames.miniTextSearch),
               dividerOnBotom: true,
             ),
             const Spacer(),
-            _CustomListTile(
+            CustomListTile(
               titleText: 'Выйти',
               icon: Icons.exit_to_app,
               onTap: _changeSize,
@@ -62,53 +65,6 @@ class _MiniSearchMenuScreenState extends State<MiniSearchMenuScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CustomListTile extends StatelessWidget {
-  const _CustomListTile({
-    super.key,
-    required this.titleText,
-    required this.icon,
-    required this.onTap,
-    required this.dividerOnBotom,
-  });
-
-  final String titleText;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool dividerOnBotom;
-
-  @override
-  Widget build(BuildContext context) {
-    const textStyle = TextStyle(
-      fontWeight: FontWeight.w700,
-      fontSize: 18,
-      color: Colors.white,
-    );
-    const borderSide = BorderSide(
-      color: Colors.white,
-      width: 2,
-    );
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: dividerOnBotom ? BorderSide.none : borderSide,
-          bottom: dividerOnBotom ? borderSide : BorderSide.none,
-        ),
-      ),
-      child: ListTile(
-        hoverColor: Colors.white12,
-        iconColor: Colors.white,
-        leading: Icon(icon),
-        title: Text(
-          titleText,
-          style: textStyle,
-        ),
-        onTap: onTap,
       ),
     );
   }

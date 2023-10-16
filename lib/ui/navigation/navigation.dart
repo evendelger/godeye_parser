@@ -1,12 +1,11 @@
-import 'package:phone_corrector/features/full_file_search/full_file_search.dart';
-import 'package:phone_corrector/features/mini_file_search/mini_file_search.dart';
-import 'package:phone_corrector/features/mini_search_menu/mini_search_menu.dart';
-import 'package:phone_corrector/features/mini_text_search/mini_text_search.dart';
-import 'package:phone_corrector/features/size_transition/size_transition.dart';
-import 'package:phone_corrector/services/screen_size_service.dart';
+import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
+import 'package:godeye_parser/features/mini_file_search/mini_file_search.dart';
+import 'package:godeye_parser/features/mini_search_menu/mini_search_menu.dart';
+import 'package:godeye_parser/features/mini_text_search/mini_text_search.dart';
+import 'package:godeye_parser/service_locator.dart';
+import 'package:godeye_parser/services/screen_size_service.dart';
 
 abstract class MainNavigationRouteNames {
-  static const transitionScreen = '/';
   static const fullSizeScreen = '/full_size';
   static const miniSizeScreen = '/mini_size';
   static const miniFileSearch = '/mini_size/file_search';
@@ -14,7 +13,11 @@ abstract class MainNavigationRouteNames {
 }
 
 class Navigation {
-  Navigation({required this.screenSizeService});
+  Navigation._({required this.screenSizeService});
+
+  static Navigation get instance => _instance;
+  static final _instance =
+      Navigation._(screenSizeService: getIt<ScreenSizeService>());
 
   final ScreenSizeService screenSizeService;
 
@@ -23,8 +26,6 @@ class Navigation {
       : MainNavigationRouteNames.miniSizeScreen;
 
   final routes = {
-    MainNavigationRouteNames.transitionScreen: (_) =>
-        const SizeTransitionScreen(),
     MainNavigationRouteNames.fullSizeScreen: (_) =>
         const FullFileSearchScreen(),
     MainNavigationRouteNames.miniSizeScreen: (_) =>

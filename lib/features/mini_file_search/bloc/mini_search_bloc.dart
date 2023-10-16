@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/repositories/repositories.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/repositories/repositories.dart';
 
 part 'mini_search_event.dart';
 part 'mini_search_state.dart';
@@ -37,8 +37,8 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
   ) async {
     var localModel = state.model;
 
-    if (event.name != localModel.name || !state.model.fileWasExamined) {
-      final newStatus = state.model.stateModel.statuses
+    if (event.name != localModel.name || !localModel.fileWasExamined) {
+      final newStatus = localModel.stateModel.statuses
           .copyWith(regionStatus: SearchStatus.inProgress);
       localModel.stateModel.statuses = newStatus;
 
@@ -54,14 +54,14 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       emit(MiniSearchFailed(model: localModel));
       return;
     }
-    var newStatus = state.model.stateModel.statuses
+    var newStatus = localModel.stateModel.statuses
         .copyWith(regionStatus: SearchStatus.inProgress);
     localModel.stateModel.statuses = newStatus;
     localModel.stateModel.regionToSearch = event.region;
     emit(MiniSearchInProgress(model: localModel));
 
     final correctedPhones = phonesRepository.searchByRegion(
-      state.model,
+      localModel,
       event.region,
     );
 
@@ -84,7 +84,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     var localModel = state.model;
 
     if (localModel.name != event.name || !localModel.fileWasExamined) {
-      final newStatus = state.model.stateModel.statuses
+      final newStatus = localModel.stateModel.statuses
           .copyWith(cityStatus: SearchStatus.inProgress);
       localModel.stateModel.statuses = newStatus;
 
@@ -93,7 +93,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     }
 
     if (!localModel.fileFounded) {
-      final newStatus = state.model.stateModel.statuses
+      final newStatus = localModel.stateModel.statuses
           .copyWith(cityStatus: SearchStatus.error);
       localModel.stateModel.statuses = newStatus;
 
@@ -101,7 +101,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       return;
     }
 
-    final phonesTuple = phonesRepository.searchByCity(state.model, event.city);
+    final phonesTuple = phonesRepository.searchByCity(localModel, event.city);
 
     localModel.stateModel.cityRegionPhones = phonesTuple.$1;
     localModel.stateModel.cityPhones = phonesTuple.$2;
@@ -123,7 +123,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     var localModel = state.model;
 
     if (localModel.name != event.name || !localModel.fileWasExamined) {
-      final newStatus = state.model.stateModel.statuses
+      final newStatus = localModel.stateModel.statuses
           .copyWith(experienceStatus: SearchStatus.inProgress);
       localModel.stateModel.statuses = newStatus;
 
@@ -132,7 +132,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     }
 
     if (!localModel.fileFounded) {
-      final newStatus = state.model.stateModel.statuses
+      final newStatus = localModel.stateModel.statuses
           .copyWith(experienceStatus: SearchStatus.error);
       localModel.stateModel.statuses = newStatus;
 
@@ -142,12 +142,34 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     localModel.stateModel.experienceToSearch = event.experience;
 
     final phonesTuple =
-        phonesRepository.searchByExperience(state.model, event.experience);
+        phonesRepository.searchByExperience(localModel, event.experience);
 
     localModel.stateModel.experienceRegionPhones = phonesTuple.$1;
     localModel.stateModel.experiencePhones = phonesTuple.$2;
 
-    localModel.stateModel.statuses = state.model.stateModel.statuses
+    final regionPhonesWithoutDate = <String>[];
+    if (localModel.stateModel.regionPhones != null) {
+      for (var regionPhone in localModel.stateModel.regionPhones!) {
+        final correctModel = localModel.allPersonModels!.firstWhere(
+            (model) => model.phoneNumbersList.contains(regionPhone));
+        if (correctModel.dateOfBirth == null) {
+          regionPhonesWithoutDate.add(regionPhone);
+        }
+      }
+    }
+
+    final phonesWithoutDate = <String>[];
+    for (var model in localModel.allPersonModels!) {
+      if (model.dateOfBirth == null) {
+        final copyOfList = model.phoneNumbersList;
+        copyOfList.removeAll(regionPhonesWithoutDate);
+        phonesWithoutDate.addAll(copyOfList);
+      }
+    }
+
+    localModel.stateModel.phonesWithoutDate = phonesWithoutDate;
+    localModel.stateModel.regionPhonesWithoutDate = regionPhonesWithoutDate;
+    localModel.stateModel.statuses = localModel.stateModel.statuses
         .copyWith(experienceStatus: SearchStatus.success);
 
     emit(MiniSearchExperienceInfo(
@@ -156,6 +178,8 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       experienceToSearch: event.experience,
       experienceRegionPhones: localModel.stateModel.experienceRegionPhones!,
       experiencePhones: localModel.stateModel.experiencePhones!,
+      phonesWithoutDate: localModel.stateModel.phonesWithoutDate!,
+      regionPhonesWithoutDate: localModel.stateModel.regionPhonesWithoutDate!,
     ));
   }
 
@@ -180,7 +204,6 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     Emitter<MiniSearchState> emit,
   ) {
     if (state.model.allPhones == null ||
-        state.model.stateModel.experienceToSearch == null ||
         state.model.stateModel.cityRegionPhones == null ||
         state.model.stateModel.cityPhones == null) {
       emit(MiniSearchInitial(model: state.model));
@@ -211,6 +234,8 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       experienceToSearch: state.model.stateModel.experienceToSearch!,
       experienceRegionPhones: state.model.stateModel.experienceRegionPhones!,
       experiencePhones: state.model.stateModel.experiencePhones!,
+      phonesWithoutDate: state.model.stateModel.phonesWithoutDate!,
+      regionPhonesWithoutDate: state.model.stateModel.regionPhonesWithoutDate!,
     ));
   }
 }

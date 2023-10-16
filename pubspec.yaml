@@ -1,4 +1,4 @@
-name: phone_corrector
+name: godeye_parser
 description: A program that's find forrect phones by region 
 publish_to: 'none'
 version: 1.0.0+1
@@ -12,9 +12,6 @@ dependencies:
   bloc: ^8.1.2
   flutter_bloc: ^8.1.3
   equatable: ^2.0.5
-  dio: ^5.3.2
-  http: ^1.1.0
-  logger: ^2.0.2
   get_it: ^7.6.4
   dropdown_search: ^5.0.6
   file_picker: ^5.5.0

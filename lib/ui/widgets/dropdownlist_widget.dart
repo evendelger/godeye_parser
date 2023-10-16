@@ -1,9 +1,10 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phone_corrector/domain/data/regions_data.dart';
-import 'package:phone_corrector/domain/models/models.dart';
-import 'package:phone_corrector/ui/functions/functions.dart';
+import 'package:godeye_parser/domain/data/regions_data.dart';
+import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/ui/functions/functions.dart';
+import 'package:godeye_parser/ui/theme/theme.dart';
 
 enum ProviderType {
   fullFilesSearch,
@@ -59,8 +60,13 @@ class DropDownListWidget extends StatelessWidget {
           model.textItem.regionToSearch = value;
         }
       } else {
-        final model = context.read<MiniSearchingData>();
-        model.controllers.regionToSearch = value;
+        if (typeOfProvider == ProviderType.miniFilesSearch) {
+          final model = context.read<MiniSearchingData>();
+          model.controllers.regionToSearch = value;
+        } else if (typeOfProvider == ProviderType.miniTextSearch) {
+          final model = context.read<TextSearchingDataItem>();
+          model.regionToSearch = value;
+        }
       }
       controller.text = '';
     }
@@ -69,10 +75,8 @@ class DropDownListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textStyle = TextStyle(
-      fontSize: fontItembuilderSize,
-      fontWeight: FontWeight.w700,
-    );
+    final textStyle =
+        theme.textTheme.bodyMedium!.copyWith(fontSize: fontItembuilderSize);
 
     return Center(
       child: SizedBox(
@@ -122,7 +126,7 @@ class DropDownListWidget extends StatelessWidget {
             dropdownSearchDecoration: InputDecoration(
               isDense: true,
               hintText: "Выбрать регион",
-              hintStyle: TextStyle(color: Colors.black.withOpacity(0.4)),
+              hintStyle: TextStyle(color: ColorsList.hintRegionTextColor),
               contentPadding: contentPadding,
               isCollapsed: true,
               filled: true,
@@ -164,7 +168,7 @@ class SingleItemAlertDialog extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        color: theme.primaryColor.withOpacity(0.15),
+        color: ColorsList.primaryWithLargeOpacity,
       ),
       child: Padding(
         padding: const EdgeInsets.all(5.0),
