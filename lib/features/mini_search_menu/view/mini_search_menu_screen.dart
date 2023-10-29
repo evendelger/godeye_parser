@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/features/mini_search_menu/widgets/widgets.dart';
 import 'package:godeye_parser/service_locator.dart';
-import 'package:godeye_parser/ui/navigation/navigation.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -28,12 +28,7 @@ class _MiniSearchMenuScreenState extends State<MiniSearchMenuScreen> {
       StorageKeys.appSizeKey,
       StorageSizeValue.fullSize.value,
     );
-    await Navigator.of(context)
-        .popAndPushNamed(MainNavigationRouteNames.fullSizeScreen);
-  }
-
-  void _navigate(String route) {
-    Navigator.pushNamed(context, route);
+    context.goNamed('fullSearch');
   }
 
   @override
@@ -46,13 +41,13 @@ class _MiniSearchMenuScreenState extends State<MiniSearchMenuScreen> {
             CustomListTile(
               titleText: 'Поиск по файлу',
               icon: Icons.file_open_outlined,
-              onTap: () => _navigate(MainNavigationRouteNames.miniFileSearch),
+              onTap: () => context.goNamed('miniFileSearch'),
               dividerOnBotom: true,
             ),
             CustomListTile(
               titleText: 'Поиск по тексту',
               icon: Icons.text_fields,
-              onTap: () => _navigate(MainNavigationRouteNames.miniTextSearch),
+              onTap: () => context.goNamed('miniTextSearch'),
               dividerOnBotom: true,
             ),
             const Spacer(),

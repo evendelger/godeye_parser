@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
 
 class MiniSearchActionButtonsRow extends StatefulWidget {
@@ -43,7 +44,7 @@ class _MiniSearchActionButtonsRowState
         const Spacer(),
         _CustomFlatButton(
           text: 'Выйти',
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FolderAlertDialog extends StatelessWidget {
   const FolderAlertDialog({
@@ -20,7 +21,7 @@ class FolderAlertDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
           child: const Text('OK'),
         ),
       ],

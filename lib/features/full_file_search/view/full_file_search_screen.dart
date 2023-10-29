@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/features/full_text_search/full_text_search.dart';
 import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/service_locator.dart';
-import 'package:godeye_parser/ui/navigation/navigation.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,13 +96,12 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
     }
   }
 
-  Future<void> changeSize() async {
+  Future<void> changeSize(BuildContext context) async {
     getIt<SharedPreferences>().setString(
       StorageKeys.appSizeKey,
       StorageSizeValue.miniSize.value,
     );
-    await Navigator.of(context)
-        .popAndPushNamed(MainNavigationRouteNames.miniSizeScreen);
+    context.goNamed('miniSearchMenu');
   }
 
   @override
@@ -158,7 +157,7 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            onPressed: changeSize,
+                            onPressed: () => changeSize(context),
                             padding: EdgeInsets.zero,
                             icon: const Icon(
                               Icons.stay_primary_portrait,
