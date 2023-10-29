@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:godeye_parser/data/database/database_helper.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/domain/domain.dart';
-import 'package:godeye_parser/features/full_file_search/widgets/widgets.dart';
-import 'package:godeye_parser/features/mini_file_search/bloc/mini_search_bloc.dart';
-import 'package:godeye_parser/features/mini_file_search/widgets/widgets.dart';
+import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
+import 'package:godeye_parser/features/mini_file_search/mini_file_search.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
 import 'package:provider/provider.dart';

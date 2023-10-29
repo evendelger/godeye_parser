@@ -3,10 +3,8 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 
-import 'package:godeye_parser/data/data_provider/data_provider.dart';
-import 'package:godeye_parser/domain/models/models.dart';
-import 'package:godeye_parser/domain/repository/abstract_phones_repository.dart';
-import 'package:godeye_parser/data/services/services.dart';
+import 'package:godeye_parser/domain/domain.dart';
+import 'package:godeye_parser/data/data.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
   const PhonesDataRepository({

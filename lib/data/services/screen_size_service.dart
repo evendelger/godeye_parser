@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:godeye_parser/data/storage_keys.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

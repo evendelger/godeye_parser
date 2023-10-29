@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:godeye_parser/features/full_file_search/widgets/widgets.dart';
-import 'package:godeye_parser/features/mini_file_search/bloc/mini_search_bloc.dart';
+import 'package:godeye_parser/features/mini_file_search/mini_file_search.dart';
 
 class CustomShowButton extends StatelessWidget {
   const CustomShowButton({

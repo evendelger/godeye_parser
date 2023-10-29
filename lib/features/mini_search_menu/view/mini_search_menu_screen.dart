@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:godeye_parser/data/data.dart';
-import 'package:godeye_parser/features/mini_search_menu/widgets/widgets.dart';
+import 'package:godeye_parser/features/mini_search_menu/mini_search_menu.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';

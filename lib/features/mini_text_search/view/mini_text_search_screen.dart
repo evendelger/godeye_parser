@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:godeye_parser/data/database/database_helper.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_text_search/full_text_search.dart';
 import 'package:godeye_parser/service_locator.dart';

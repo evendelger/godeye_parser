@@ -1,4 +1,4 @@
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/domain/domain.dart';
 
 abstract class AbstractPhonesDataRepository {
   Future<PersonFileModel> getDataFromFile(

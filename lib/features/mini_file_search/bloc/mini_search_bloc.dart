@@ -28,29 +28,43 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     emit(MiniSearchInitial(model: PersonFileModel.empty()));
   }
 
-  Future<void> _searchByRegion(
-    SearchByRegion event,
-    Emitter<MiniSearchState> emit,
+  Future<(bool, PersonFileModel)> _takeActions(
+    String name,
+    PersonFileModel localModel,
   ) async {
-    var localModel = state.model;
-
-    if (event.name != localModel.name || !localModel.fileWasExamined) {
+    var isFailed = false;
+    if (name != localModel.name || !localModel.fileWasExamined) {
       final newStatus = localModel.stateModel.statuses
           .copyWith(regionStatus: SearchStatus.inProgress);
       localModel.stateModel.statuses = newStatus;
-
-      emit(MiniSearchInProgress(model: localModel));
-      localModel = await phonesRepository.getDataFromFile(event.name);
+      localModel = await phonesRepository.getDataFromFile(name);
     }
 
     if (!localModel.fileFounded) {
       final newStatus = localModel.stateModel.statuses
           .copyWith(regionStatus: SearchStatus.error);
       localModel.stateModel.statuses = newStatus;
+      isFailed = true;
+    }
+    return (isFailed, localModel);
+  }
 
+  Future<void> _searchByRegion(
+    SearchByRegion event,
+    Emitter<MiniSearchState> emit,
+  ) async {
+    var localModel = state.model;
+
+    emit(MiniSearchInProgress(model: localModel));
+    final resultOfAction = await _takeActions(event.name, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
+
+    if (isFailed) {
       emit(MiniSearchFailed(model: localModel));
       return;
     }
+
     var newStatus = localModel.stateModel.statuses
         .copyWith(regionStatus: SearchStatus.inProgress);
     localModel.stateModel.statuses = newStatus;
@@ -80,20 +94,12 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
   ) async {
     var localModel = state.model;
 
-    if (localModel.name != event.name || !localModel.fileWasExamined) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(cityStatus: SearchStatus.inProgress);
-      localModel.stateModel.statuses = newStatus;
+    emit(MiniSearchInProgress(model: localModel));
+    final resultOfAction = await _takeActions(event.name, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
 
-      emit(MiniSearchInProgress(model: localModel));
-      localModel = await phonesRepository.getDataFromFile(event.name);
-    }
-
-    if (!localModel.fileFounded) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(cityStatus: SearchStatus.error);
-      localModel.stateModel.statuses = newStatus;
-
+    if (isFailed) {
       emit(MiniSearchFailed(model: localModel));
       return;
     }
@@ -119,20 +125,12 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
   ) async {
     var localModel = state.model;
 
-    if (localModel.name != event.name || !localModel.fileWasExamined) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(experienceStatus: SearchStatus.inProgress);
-      localModel.stateModel.statuses = newStatus;
+    emit(MiniSearchInProgress(model: localModel));
+    final resultOfAction = await _takeActions(event.name, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
 
-      emit(MiniSearchInProgress(model: localModel));
-      localModel = await phonesRepository.getDataFromFile(event.name);
-    }
-
-    if (!localModel.fileFounded) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(experienceStatus: SearchStatus.error);
-      localModel.stateModel.statuses = newStatus;
-
+    if (isFailed) {
       emit(MiniSearchFailed(model: localModel));
       return;
     }

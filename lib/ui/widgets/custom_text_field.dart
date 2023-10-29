@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:godeye_parser/data/database/database_helper.dart';
+import 'package:godeye_parser/data/database/database.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 
 enum SearchingDataType {

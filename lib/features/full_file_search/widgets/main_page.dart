@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:godeye_parser/data/data.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:godeye_parser/domain/models/file_search_data/file_search_data.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';

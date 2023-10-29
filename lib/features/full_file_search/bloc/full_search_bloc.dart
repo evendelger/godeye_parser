@@ -1,9 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
-import 'package:godeye_parser/domain/repository/abstract_phones_repository.dart';
 
 part 'full_search_event.dart';
 part 'full_search_state.dart';
@@ -62,6 +61,30 @@ class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
     emit(FullSearchState(models: state.models));
   }
 
+  Future<(bool, PersonFileModel)> _takeActions(
+    String name,
+    int index,
+    List<PersonFileModel> localList,
+    PersonFileModel localModel,
+  ) async {
+    var isFailed = false;
+    if (name != localModel.name || !localModel.fileWasExamined) {
+      final newStatus = localModel.stateModel.statuses
+          .copyWith(regionStatus: SearchStatus.inProgress);
+      localModel.stateModel.statuses = newStatus;
+      localList[index] = localModel;
+      localModel = await _examineFile(index, name);
+    }
+    if (!localModel.fileFounded) {
+      final newStatus = localModel.stateModel.statuses
+          .copyWith(regionStatus: SearchStatus.error);
+      localModel.stateModel.statuses = newStatus;
+      localList[index] = localModel;
+      isFailed = true;
+    }
+    return (isFailed, localModel);
+  }
+
   Future<PersonFileModel> _examineFile(int index, [String? name]) async {
     return await phonesRepository
         .getDataFromFile(name ?? state.models[index].name);
@@ -73,30 +96,23 @@ class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
   ) async {
     var localModel = state.models[event.index];
     var localList = state.models;
+    emit(FileSearchInProgress(
+        models: localList, index: event.index, searchType: SearchType.region));
 
-    if (event.name != localModel.name || !localModel.fileWasExamined) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.inProgress);
-      localModel.stateModel.statuses = newStatus;
-      localList[event.index] = localModel;
-      emit(FileSearchInProgress(
-          models: localList,
-          index: event.index,
-          searchType: SearchType.region));
-      localModel = await _examineFile(event.index, event.name);
-    }
-    if (!localModel.fileFounded) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.error);
-      localModel.stateModel.statuses = newStatus;
-      localList[event.index] = localModel;
+    final resultOfAction =
+        await _takeActions(event.name, event.index, localList, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
 
+    if (isFailed) {
+      localList[event.index] = localModel;
       emit(FileSearchFailed(
           models: localList,
           index: event.index,
           searchType: SearchType.region));
       return;
     }
+
     var newStatus = localModel.stateModel.statuses
         .copyWith(regionStatus: SearchStatus.inProgress);
     localModel.stateModel.statuses = newStatus;
@@ -133,21 +149,16 @@ class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
     var localModel = state.models[event.index];
     var localList = state.models;
 
-    if (event.name != localModel.name || !localModel.fileWasExamined) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.inProgress);
-      localModel.stateModel.statuses = newStatus;
-      localList[event.index] = localModel;
-      emit(FileSearchInProgress(
-          models: localList, index: event.index, searchType: SearchType.city));
-      localModel = await _examineFile(event.index, event.name);
-    }
-    if (!localModel.fileFounded) {
-      final newStatus = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.error);
-      localModel.stateModel.statuses = newStatus;
-      localList[event.index] = localModel;
+    emit(FileSearchInProgress(
+        models: localList, index: event.index, searchType: SearchType.city));
 
+    final resultOfAction =
+        await _takeActions(event.name, event.index, localList, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
+
+    if (isFailed) {
+      localList[event.index] = localModel;
       emit(FileSearchFailed(
           models: localList, index: event.index, searchType: SearchType.city));
       return;
@@ -178,21 +189,18 @@ class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
     var localModel = state.models[event.index];
     var localList = state.models;
 
-    if (event.name != localModel.name || !localModel.fileWasExamined) {
-      localModel.stateModel.statuses = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.inProgress);
-      localList[event.index] = localModel;
-      emit(FileSearchInProgress(
-          models: localList,
-          index: event.index,
-          searchType: SearchType.experience));
-      localModel = await _examineFile(event.index, event.name);
-    }
-    if (!localModel.fileFounded) {
-      localModel.stateModel.statuses = localModel.stateModel.statuses
-          .copyWith(regionStatus: SearchStatus.error);
-      localList[event.index] = localModel;
+    emit(FileSearchInProgress(
+        models: localList,
+        index: event.index,
+        searchType: SearchType.experience));
 
+    final resultOfAction =
+        await _takeActions(event.name, event.index, localList, localModel);
+    localModel = resultOfAction.$2;
+    final isFailed = resultOfAction.$1;
+
+    if (isFailed) {
+      localList[event.index] = localModel;
       emit(FileSearchFailed(
           models: localList,
           index: event.index,

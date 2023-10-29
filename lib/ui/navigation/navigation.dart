@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/features/error/error.dart';
-import 'package:godeye_parser/features/full_file_search/view/view.dart';
+import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/features/mini_file_search/mini_file_search.dart';
 import 'package:godeye_parser/features/mini_search_menu/mini_search_menu.dart';
 import 'package:godeye_parser/features/mini_text_search/mini_text_search.dart';
