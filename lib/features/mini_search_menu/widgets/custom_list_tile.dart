@@ -32,7 +32,7 @@ class CustomListTile extends StatelessWidget {
       ),
       child: ListTile(
         hoverColor: ColorsList.hoverColor,
-        iconColor: ColorsList.hoverColor,
+        iconColor: Colors.white,
         leading: Icon(icon),
         title: Text(
           titleText,

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/domain/domain.dart';
 
 class PersonFileModel extends Equatable {
   const PersonFileModel({
@@ -20,7 +20,7 @@ class PersonFileModel extends Equatable {
 
   factory PersonFileModel.empty({String? name}) {
     return PersonFileModel(
-      name: '',
+      name: name ?? '',
       allPhones: null,
       allPersonModels: null,
       stateModel: PersonStateModel(),

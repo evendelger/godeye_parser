@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
+import 'package:godeye_parser/domain/domain.dart';
 
 part 'text_search_event.dart';
 part 'text_search_state.dart';

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/data/data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/features/full_text_search/full_text_search.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
@@ -72,11 +71,9 @@ class TextSearchButtonRow extends StatelessWidget {
   final bool isFullScreen;
   final TextEditingController textController;
 
-  void _search(BuildContext context) {
-    final textItem = isFullScreen
-        ? context.read<FullSearchingData>().textItem
-        : context.read<TextSearchingDataItem>();
-    if (textItem.regionToSearch.isNotEmpty) {
+  void _search(BuildContext context) async {
+    final textItem = await DatabaseHelper.instance.selectTextItem();
+    if (textItem.regionToSearch.isNotEmpty && context.mounted) {
       context.read<TextSearchBloc>().add(
             SearchByRegion(
               text: textItem.controllerText,
@@ -86,17 +83,11 @@ class TextSearchButtonRow extends StatelessWidget {
     }
   }
 
-  Future<void> _pasteAndSaveData(BuildContext context) async {
+  Future<void> _pasteAndSaveData() async {
     final cdata = await Clipboard.getData(Clipboard.kTextPlain);
-    if (cdata != null && context.mounted) {
+    if (cdata != null) {
       textController.text = cdata.text ?? textController.text;
-      if (isFullScreen) {
-        context.read<FullSearchingData>().textItem.controllerText =
-            textController.text;
-      } else {
-        context.read<TextSearchingDataItem>().controllerText =
-            textController.text;
-      }
+      DatabaseHelper.instance.updateText(textController.text);
     }
   }
 
@@ -106,7 +97,7 @@ class TextSearchButtonRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _TextSearchFilledButton(
-          onPressed: () => _pasteAndSaveData(context),
+          onPressed: _pasteAndSaveData,
           text: 'Вставить',
           isFullScreen: isFullScreen,
         ),
@@ -138,13 +129,9 @@ class TextSearchTextField extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
       );
 
-  void _saveValue(BuildContext context, String value) {
+  void _saveValue(String value) {
     controller.text = value;
-    if (isFullScreen) {
-      context.read<FullSearchingData>().textItem.controllerText = value;
-    } else {
-      context.read<TextSearchingDataItem>().controllerText = value;
-    }
+    DatabaseHelper.instance.updateText(controller.text);
   }
 
   @override
@@ -157,7 +144,7 @@ class TextSearchTextField extends StatelessWidget {
         controller: controller,
         minLines: isFullScreen ? 18 : size.height ~/ 75,
         maxLines: isFullScreen ? 18 : size.height ~/ 75,
-        onChanged: (value) => _saveValue(context, value),
+        onChanged: (value) => _saveValue(value),
         style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,

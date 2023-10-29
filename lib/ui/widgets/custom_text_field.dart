@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/database/database_helper.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
-import 'package:provider/provider.dart';
 
 enum SearchingDataType {
   full,
@@ -88,24 +87,23 @@ class CustomTextField extends StatelessWidget {
   }
 
   void _saveControllerValue(BuildContext context, String value) {
-    final controllersModel = searchingDataType == SearchingDataType.full
-        ? context.read<FullSearchingData>().controllers[index!]
-        : context.read<MiniSearchingData>().controllers;
-
     switch (parseType) {
       case ParseType.name:
         {
-          controllersModel.nameControllerText = controller.text;
+          DatabaseHelper.instance
+              .updateValue(DBConsts.name, controller.text, index ?? 0);
         }
       case ParseType.city:
         {
-          controllersModel.cityControllerText = controller.text;
+          DatabaseHelper.instance
+              .updateValue(DBConsts.city, controller.text, index ?? 0);
         }
       case ParseType.experience:
         {
           final parsedValue = int.tryParse(controller.text);
           if (parsedValue != null) {
-            controllersModel.experienceControllerText = controller.text;
+            DatabaseHelper.instance
+                .updateValue(DBConsts.experience, controller.text, index ?? 0);
           }
         }
     }

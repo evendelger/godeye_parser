@@ -3,14 +3,20 @@ import 'package:equatable/equatable.dart';
 
 import 'package:godeye_parser/domain/models/models.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
-import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
+import 'package:godeye_parser/domain/repository/abstract_phones_repository.dart';
 
 part 'full_search_event.dart';
 part 'full_search_state.dart';
 
 class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
   FullSearchBloc({required this.phonesRepository})
-      : super(FullSearchState.init()) {
+      // инициализирую 200 моделей, потому что просто НЕ НАШЕЛ другого
+      // способа изменить количество моделей в стейте или изменить сам стейт
+      // чтобы блок этот стейт не запускал, т.е. он просто игнорирует все ограничения
+      // понимаю, что это ОЧЕНЬ плохое решение, но спустя 5-6 часов я так и не нашел другого способа
+      // чтобы приложение просто работало и не крашилось из-за говно-блока, видимо стоит попробовать riverpod :)
+      : super(FullSearchState.init(200)) {
+    on<SetupState>(_setupState);
     on<ClearList>(_clearList);
     on<ClearItem>(_clearItem);
     on<AddItems>(_addItems);
@@ -23,6 +29,10 @@ class FullSearchBloc extends Bloc<FullSearchEvent, FullSearchState> {
   }
 
   final AbstractPhonesDataRepository phonesRepository;
+
+  void _setupState(SetupState event, Emitter<FullSearchState> emit) async {
+    emit(FullSearchState.init(event.length));
+  }
 
   void _clearList(ClearList event, Emitter<FullSearchState> emit) {
     state.models.clear();

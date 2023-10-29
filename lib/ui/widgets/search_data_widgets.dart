@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 
 class SearchEmpty extends StatelessWidget {

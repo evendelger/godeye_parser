@@ -40,6 +40,13 @@ class Statuses extends Equatable {
   final SearchStatus cityStatus;
   final SearchStatus experienceStatus;
 
+  // ignore: prefer_const_constructors
+  factory Statuses.init() => Statuses(
+        regionStatus: SearchStatus.waiting,
+        cityStatus: SearchStatus.waiting,
+        experienceStatus: SearchStatus.waiting,
+      );
+
   @override
   List<Object?> get props => [regionStatus, cityStatus, experienceStatus];
 

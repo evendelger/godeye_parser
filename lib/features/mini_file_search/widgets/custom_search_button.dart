@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/data/data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/data.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_file_search/widgets/widgets.dart';
 import 'package:godeye_parser/features/mini_file_search/bloc/mini_search_bloc.dart';
 
@@ -13,9 +13,9 @@ class CustomSearchButton extends StatelessWidget {
 
   final SearchType searchType;
 
-  void _search(BuildContext context) {
-    final itemModel = context.read<MiniSearchingData>().controllers;
+  void _search(BuildContext context) async {
     final bloc = context.read<MiniSearchBloc>();
+    final itemModel = await DatabaseHelper.instance.selectFileItem(0);
 
     switch (searchType) {
       case SearchType.region:

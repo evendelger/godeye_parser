@@ -5,10 +5,10 @@ class FullSearchState extends Equatable {
 
   final List<PersonFileModel> models;
 
-  factory FullSearchState.init() {
-    return FileSearchEmpty(
+  factory FullSearchState.init(int count) {
+    return FullSearchState(
       models: List<PersonFileModel>.generate(
-        5,
+        count,
         (_) => PersonFileModel.empty(),
         growable: true,
       ),
@@ -25,6 +25,10 @@ class FullSearchState extends Equatable {
 
   @override
   List<Object?> get props => [models];
+}
+
+final class FileSearchInitial extends FullSearchState {
+  const FileSearchInitial({required super.models});
 }
 
 final class FileSearchEmpty extends FullSearchState {

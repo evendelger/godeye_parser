@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/database/database_helper.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_text_search/full_text_search.dart';
-import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
 import 'package:provider/provider.dart';
@@ -16,11 +16,18 @@ class MiniTextSearchScreen extends StatefulWidget {
 class _MiniTextSearchScreenState extends State<MiniTextSearchScreen> {
   late final TextEditingController textController;
   late final TextEditingController regionController;
-
+  String initialValue = '';
   @override
   void initState() {
     textController = TextEditingController();
     regionController = TextEditingController();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var textItem = await DatabaseHelper.instance.selectTextItem();
+      textController.text = textItem.controllerText;
+      initialValue = textItem.regionToSearch;
+      setState(() {});
+    });
     super.initState();
   }
 
@@ -40,9 +47,6 @@ class _MiniTextSearchScreenState extends State<MiniTextSearchScreen> {
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
           ),
         ),
-        Provider<TextSearchingDataItem>(
-          create: (_) => TextSearchingDataItem(),
-        ),
       ],
       child: Scaffold(
         body: Padding(
@@ -56,7 +60,6 @@ class _MiniTextSearchScreenState extends State<MiniTextSearchScreen> {
                   children: [
                     DropDownListWidget(
                       controller: regionController,
-                      typeOfProvider: ProviderType.miniTextSearch,
                       width: null,
                       height: 30,
                       contentPadding: const EdgeInsets.only(
@@ -66,8 +69,8 @@ class _MiniTextSearchScreenState extends State<MiniTextSearchScreen> {
                       ),
                       fontSelectedSize: 20,
                       overflow: TextOverflow.ellipsis,
-                      initialValue: null,
-                      screenType: ScreenType.mini,
+                      initialValue: initialValue.isEmpty ? null : initialValue,
+                      dataType: DataType.text,
                       fontItembuilderSize: 16,
                     ),
                     const SizedBox(height: 5),

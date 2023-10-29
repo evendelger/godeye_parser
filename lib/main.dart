@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:godeye_parser/godeye_parser_app.dart';
 import 'package:godeye_parser/service_locator.dart';
-import 'package:godeye_parser/services/screen_size_service.dart';
+import 'package:godeye_parser/data/data.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   await windowManager.ensureInitialized();
   await ServiceLocator.initLocator();
 
@@ -24,4 +28,6 @@ void main() async {
 
   const phoneApp = GodEyeParserApp();
   runApp(phoneApp);
+
+  DatabaseHelper.instance.close();
 }

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:godeye_parser/domain/data/data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/features/full_text_search/full_text_search.dart';
-import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/service_locator.dart';
-import 'package:godeye_parser/services/screen_size_service.dart';
 import 'package:godeye_parser/ui/navigation/navigation.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +52,7 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
         icon: Icon(
           Icons.file_open_outlined,
           size: iconSize,
-          color: iconColor.withOpacity(0.7),
+          color: iconColor.withOpacity(0.5),
         ),
         selectedIcon: const Icon(
           Icons.file_open,
@@ -71,7 +69,7 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
         icon: Icon(
           Icons.text_fields_outlined,
           size: iconSize,
-          color: iconColor.withOpacity(0.7),
+          color: iconColor.withOpacity(0.5),
         ),
         selectedIcon: const Icon(
           Icons.text_fields,
@@ -118,10 +116,6 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
           ),
         ),
-        Provider<FullSearchingData>(
-          create: (_) => FullSearchingData.init(),
-          lazy: false,
-        ),
         Provider<TextSearchBloc>(
           create: (_) => TextSearchBloc(
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
@@ -138,8 +132,11 @@ class FullFileSearchScreenState extends State<FullFileSearchScreen> {
                   Theme(
                     data: ThemeData(
                       splashFactory: NoSplash.splashFactory,
+                      highlightColor: Colors.transparent,
                     ),
                     child: NavigationRail(
+                      useIndicator: false,
+                      indicatorColor: Colors.transparent,
                       labelType: NavigationRailLabelType.all,
                       groupAlignment: -0.95,
                       elevation: 20,

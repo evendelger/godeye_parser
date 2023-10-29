@@ -1,14 +1,16 @@
 import 'package:get_it/get_it.dart';
-import 'package:godeye_parser/domain/data/data.dart';
-import 'package:godeye_parser/repositories/repositories.dart';
-import 'package:godeye_parser/services/phones_service.dart';
-import 'package:godeye_parser/services/screen_size_service.dart';
+import 'package:godeye_parser/data/data.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final getIt = GetIt.I;
 
 class ServiceLocator {
   static Future<void> initLocator() async {
+    // Database
+    if (await DatabaseHelper.instance.tablesAreEmpty()) {
+      await DatabaseHelper.instance.fillDatabases(true);
+    }
     // SharedPreferences
     getIt.registerSingleton<SharedPreferences>(
       await SharedPreferences.getInstance(),

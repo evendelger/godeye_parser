@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/data/regions_data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/data.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
@@ -13,9 +13,14 @@ enum SearchType {
 }
 
 class ListItem extends StatefulWidget {
-  const ListItem({super.key, required this.index});
+  const ListItem({
+    super.key,
+    required this.index,
+    required this.fileSearchData,
+  });
 
   final int index;
+  final FileSearchData fileSearchData;
 
   @override
   State<ListItem> createState() => _ListItemState();
@@ -25,19 +30,18 @@ class _ListItemState extends State<ListItem> {
   late final TextEditingController nameController;
   late final TextEditingController cityController;
   late final TextEditingController experienceController;
+  late final String regionToSearch;
 
   @override
   void initState() {
-    nameController = TextEditingController();
-    cityController = TextEditingController();
-    experienceController = TextEditingController();
+    nameController = TextEditingController()
+      ..text = widget.fileSearchData.nameControllerText;
+    cityController = TextEditingController()
+      ..text = widget.fileSearchData.cityControllerText;
+    experienceController = TextEditingController()
+      ..text = widget.fileSearchData.experienceControllerText;
+    regionToSearch = widget.fileSearchData.regionToSearch;
     super.initState();
-
-    final searchingDataItem =
-        context.read<FullSearchingData>().controllers[widget.index];
-    nameController.text = searchingDataItem.nameControllerText;
-    cityController.text = searchingDataItem.cityControllerText;
-    experienceController.text = searchingDataItem.experienceControllerText;
   }
 
   @override
@@ -70,7 +74,10 @@ class _ListItemState extends State<ListItem> {
             ),
           ),
           const SizedBox(width: 10),
-          _RowRegionSearch(index: widget.index),
+          _RowRegionSearch(
+            index: widget.index,
+            initialValue: regionToSearch,
+          ),
           _RowCitySearch(
             cityController: cityController,
             index: widget.index,
@@ -106,6 +113,7 @@ class _ClearButton extends StatelessWidget {
     for (var c in controllers) {
       c.clear();
     }
+    DatabaseHelper.instance.clearItem(index);
   }
 
   @override
@@ -327,28 +335,29 @@ class _RowIndex extends StatelessWidget {
 }
 
 class _RowRegionSearch extends StatelessWidget {
-  const _RowRegionSearch({super.key, required this.index});
+  const _RowRegionSearch({
+    super.key,
+    required this.index,
+    required this.initialValue,
+  });
 
   final int index;
+  final String initialValue;
 
   @override
   Widget build(BuildContext context) {
-    final initialValue =
-        context.read<FullSearchingData>().controllers[index].regionToSearch;
-
     return Row(
       children: [
         DropDownListWidget(
           index: index,
           controller: TextEditingController(),
-          typeOfProvider: ProviderType.fullFilesSearch,
           width: 312,
           height: 30,
           contentPadding: const EdgeInsets.only(bottom: 3, left: 40),
           fontSelectedSize: 19,
           overflow: TextOverflow.ellipsis,
           initialValue: initialValue.isEmpty ? null : initialValue,
-          screenType: ScreenType.full,
+          dataType: DataType.file,
           fontItembuilderSize: 20,
         ),
         _SearchButton(searchType: SearchType.region, index: index),
@@ -365,9 +374,10 @@ class _SearchButton extends StatelessWidget {
   final SearchType searchType;
   final int index;
 
-  void _search(BuildContext context) {
-    final itemModel = context.read<FullSearchingData>().controllers[index];
+  void _search(BuildContext context) async {
     final bloc = context.read<FullSearchBloc>();
+    _showDialog(context, bloc);
+    final itemModel = await DatabaseHelper.instance.selectFileItem(index);
 
     switch (searchType) {
       case SearchType.region:
@@ -410,7 +420,6 @@ class _SearchButton extends StatelessWidget {
           experience: itemModel.experienceControllerText,
         ));
     }
-    _showDialog(context, bloc);
   }
 
   void _showDialog(BuildContext context, FullSearchBloc bloc) {

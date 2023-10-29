@@ -3,7 +3,7 @@ import 'package:godeye_parser/features/mini_file_search/mini_file_search.dart';
 import 'package:godeye_parser/features/mini_search_menu/mini_search_menu.dart';
 import 'package:godeye_parser/features/mini_text_search/mini_text_search.dart';
 import 'package:godeye_parser/service_locator.dart';
-import 'package:godeye_parser/services/screen_size_service.dart';
+import 'package:godeye_parser/data/data.dart';
 
 abstract class MainNavigationRouteNames {
   static const fullSizeScreen = '/full_size';

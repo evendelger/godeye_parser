@@ -1,21 +1,11 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/data/regions_data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
-import 'package:godeye_parser/ui/functions/functions.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:godeye_parser/ui/theme/theme.dart';
 
-enum ProviderType {
-  fullFilesSearch,
-  fullTextSearch,
-  miniFilesSearch,
-  miniTextSearch,
-}
-
-enum ScreenType {
-  full,
-  mini,
+enum DataType {
+  file,
+  text,
 }
 
 class DropDownListWidget extends StatelessWidget {
@@ -23,50 +13,36 @@ class DropDownListWidget extends StatelessWidget {
     super.key,
     required this.controller,
     this.index,
-    required this.typeOfProvider,
     required this.width,
     required this.height,
     required this.contentPadding,
     required this.fontSelectedSize,
     required this.overflow,
     required this.initialValue,
-    required this.screenType,
+    required this.dataType,
     required this.fontItembuilderSize,
   });
 
   final int? index;
   final TextEditingController controller;
-  final ProviderType typeOfProvider;
   final double? width;
   final double? height;
   final EdgeInsets contentPadding;
   final double fontSelectedSize;
   final TextOverflow overflow;
   final String? initialValue;
-  final ScreenType screenType;
+  final DataType dataType;
   final double fontItembuilderSize;
 
   void _saveSelectedRegion(
     BuildContext context,
     String? value,
-    ProviderType typeOfProvider,
   ) {
     if (value != null) {
-      if (screenType == ScreenType.full) {
-        final model = context.read<FullSearchingData>();
-        if (typeOfProvider == ProviderType.fullFilesSearch) {
-          model.controllers[index!].regionToSearch = value;
-        } else if (typeOfProvider == ProviderType.fullTextSearch) {
-          model.textItem.regionToSearch = value;
-        }
+      if (dataType == DataType.file) {
+        DatabaseHelper.instance.updateRegion(value, index: index);
       } else {
-        if (typeOfProvider == ProviderType.miniFilesSearch) {
-          final model = context.read<MiniSearchingData>();
-          model.controllers.regionToSearch = value;
-        } else if (typeOfProvider == ProviderType.miniTextSearch) {
-          final model = context.read<TextSearchingDataItem>();
-          model.regionToSearch = value;
-        }
+        DatabaseHelper.instance.updateRegion(value);
       }
       controller.text = '';
     }
@@ -77,7 +53,6 @@ class DropDownListWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final textStyle =
         theme.textTheme.bodyMedium!.copyWith(fontSize: fontItembuilderSize);
-
     return Center(
       child: SizedBox(
         width: width,
@@ -138,7 +113,6 @@ class DropDownListWidget extends StatelessWidget {
           onChanged: (value) => _saveSelectedRegion(
             context,
             value,
-            typeOfProvider,
           ),
           selectedItem: initialValue,
         ),

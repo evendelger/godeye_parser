@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/database/database_helper.dart';
+import 'package:godeye_parser/domain/domain.dart';
 import 'package:godeye_parser/features/full_file_search/widgets/widgets.dart';
 import 'package:godeye_parser/features/mini_file_search/bloc/mini_search_bloc.dart';
 import 'package:godeye_parser/features/mini_file_search/widgets/widgets.dart';
-import 'package:godeye_parser/repositories/repositories.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
 import 'package:provider/provider.dart';
@@ -20,14 +20,24 @@ class _MiniFileSeacrhScreenState extends State<MiniFileSeacrhScreen> {
   late final TextEditingController cityController;
   late final TextEditingController experienceController;
   late final TextEditingController regionController;
+  String initialValue = '';
 
   @override
   void initState() {
-    super.initState();
     nameController = TextEditingController();
     cityController = TextEditingController();
     experienceController = TextEditingController();
     regionController = TextEditingController();
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final fileItem = await DatabaseHelper.instance.selectFileItem(0);
+      nameController.text = fileItem.nameControllerText;
+      cityController.text = fileItem.cityControllerText;
+      experienceController.text = fileItem.experienceControllerText;
+      initialValue = fileItem.regionToSearch;
+      setState(() {});
+    });
   }
 
   @override
@@ -49,10 +59,6 @@ class _MiniFileSeacrhScreenState extends State<MiniFileSeacrhScreen> {
           create: (_) => MiniSearchBloc(
             phonesRepository: getIt<AbstractPhonesDataRepository>(),
           ),
-        ),
-        Provider<MiniSearchingData>(
-          create: (_) => MiniSearchingData.init(),
-          lazy: false,
         ),
       ],
       child: Scaffold(
@@ -76,6 +82,7 @@ class _MiniFileSeacrhScreenState extends State<MiniFileSeacrhScreen> {
                       searchType: SearchType.region,
                       isRegionSearch: true,
                       controller: regionController,
+                      initialValue: initialValue,
                     ),
                     const SizedBox(height: 5),
                     FindDataRow(

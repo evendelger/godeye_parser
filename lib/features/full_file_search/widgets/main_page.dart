@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/data/data.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/data.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:godeye_parser/domain/models/file_search_data/file_search_data.dart';
 import 'package:godeye_parser/features/full_file_search/full_file_search.dart';
 import 'package:godeye_parser/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,10 +21,28 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late final GlobalKey<AnimatedListState> _animatedListKey;
   late final ScrollController _scrollController;
+  late List<FileSearchData> fileList;
+
+  @override
+  void initState() {
+    _animatedListKey = GlobalKey<AnimatedListState>();
+    _scrollController = ScrollController();
+    super.initState();
+  }
+
+  Future<int> _getInitialCount() async {
+    fileList = await DatabaseHelper.instance.selectFileList();
+    return fileList.length;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _addToList(int count) {
     final bloc = context.read<FullSearchBloc>();
-
     bloc.add(AddItems(count: count));
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent + 100 * count,
@@ -34,7 +54,7 @@ class _MainPageState extends State<MainPage> {
       count,
       duration: duration,
     );
-    context.read<FullSearchingData>().addItems(count);
+    DatabaseHelper.instance.insertItemsToList(count);
   }
 
   void _clearList() {
@@ -42,7 +62,8 @@ class _MainPageState extends State<MainPage> {
         .removeAllItems((context, animation) => const SizedBox.shrink());
 
     context.read<FullSearchBloc>().add(const ClearList());
-    context.read<FullSearchingData>().clearList();
+    DatabaseHelper.instance.fillDatabases(false);
+    fileList = List.generate(5, (_) => FileSearchData.empty());
     Future.microtask(
       () => {
         for (int i = 0;
@@ -69,41 +90,41 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
-  void initState() {
-    _animatedListKey = GlobalKey<AnimatedListState>();
-    _scrollController = ScrollController();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
-          Expanded(
-            child: Padding(
-              padding:
-                  const EdgeInsets.only(top: 30, left: 5, right: 5, bottom: 10),
-              child: AnimatedList(
-                controller: _scrollController,
-                key: _animatedListKey,
-                initialItemCount:
-                    context.read<FullSearchingData>().controllers.length,
-                itemBuilder: (context, index, animation) {
-                  return AnimatedListItem(
-                    index: index,
-                    animation: animation,
+          FutureBuilder<int>(
+              future: _getInitialCount(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  context
+                      .read<FullSearchBloc>()
+                      .add(SetupState(length: snapshot.data!));
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          top: 30, left: 5, right: 5, bottom: 10),
+                      child: AnimatedList(
+                        controller: _scrollController,
+                        key: _animatedListKey,
+                        initialItemCount: snapshot.data!,
+                        itemBuilder: (context, index, animation) {
+                          return AnimatedListItem(
+                            index: index,
+                            animation: animation,
+                            fileSearchData: index < fileList.length
+                                ? fileList[index]
+                                : FileSearchData.empty(),
+                          );
+                        },
+                      ),
+                    ),
                   );
-                },
-              ),
-            ),
-          ),
+                }
+                return const Expanded(child: Text('Загрузка данных...'));
+              }),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             child: Row(
@@ -150,16 +171,21 @@ class AnimatedListItem extends StatelessWidget {
     super.key,
     required this.animation,
     required this.index,
+    required this.fileSearchData,
   });
 
   final Animation<double> animation;
   final int index;
+  final FileSearchData fileSearchData;
 
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: animation,
-      child: ListItem(index: index),
+      child: ListItem(
+        index: index,
+        fileSearchData: fileSearchData,
+      ),
     );
   }
 }

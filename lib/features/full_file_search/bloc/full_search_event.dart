@@ -7,6 +7,15 @@ sealed class FullSearchEvent extends Equatable {
   List<Object> get props => [];
 }
 
+final class SetupState extends FullSearchEvent {
+  const SetupState({required this.length});
+
+  final int length;
+
+  @override
+  List<Object> get props => [length];
+}
+
 final class ClearList extends FullSearchEvent {
   const ClearList();
 }

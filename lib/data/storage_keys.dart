@@ -1,4 +1,4 @@
-class StorageKeys {
+abstract class StorageKeys {
   static const filesFolderKey = "filesPath";
   static const appSizeKey = "appSize";
 }

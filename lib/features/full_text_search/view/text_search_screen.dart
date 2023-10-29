@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:godeye_parser/domain/models/models.dart';
+import 'package:godeye_parser/data/database/database_helper.dart';
 import 'package:godeye_parser/ui/widgets/widgets.dart';
 
 class FullTextSearchScreen extends StatefulWidget {
@@ -13,14 +12,20 @@ class FullTextSearchScreen extends StatefulWidget {
 class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
   late final TextEditingController textController;
   late final TextEditingController regionController;
+  String initialValue = '';
 
   @override
   void initState() {
     textController = TextEditingController();
     regionController = TextEditingController();
     super.initState();
-    final textItem = context.read<FullSearchingData>().textItem;
-    textController.text = textItem.controllerText;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final textItem = await DatabaseHelper.instance.selectTextItem();
+      textController.text = textItem.controllerText;
+      initialValue = textItem.regionToSearch;
+      setState(() {});
+    });
   }
 
   @override
@@ -32,10 +37,7 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialValue =
-        context.read<FullSearchingData>().textItem.regionToSearch;
     final size = MediaQuery.of(context).size;
-
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(10.0),
@@ -48,7 +50,6 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
                   const Spacer(),
                   DropDownListWidget(
                     controller: regionController,
-                    typeOfProvider: ProviderType.fullTextSearch,
                     width: size.width / 2.5,
                     height: null,
                     contentPadding: const EdgeInsets.only(
@@ -59,7 +60,7 @@ class _FullTextSearchScreenState extends State<FullTextSearchScreen> {
                     fontSelectedSize: 30,
                     overflow: TextOverflow.visible,
                     initialValue: initialValue.isEmpty ? null : initialValue,
-                    screenType: ScreenType.full,
+                    dataType: DataType.text,
                     fontItembuilderSize: 20,
                   ),
                   const SizedBox(height: 30),

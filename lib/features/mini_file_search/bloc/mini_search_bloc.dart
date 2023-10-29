@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:godeye_parser/domain/models/models.dart';
-import 'package:godeye_parser/repositories/repositories.dart';
+import 'package:godeye_parser/domain/domain.dart';
 
 part 'mini_search_event.dart';
 part 'mini_search_state.dart';
@@ -19,10 +20,6 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
   }
 
   final AbstractPhonesDataRepository phonesRepository;
-
-  Future<PersonFileModel> _examineFile(String name) async {
-    return await phonesRepository.getDataFromFile(name);
-  }
 
   void _clearData(
     ClearData event,
@@ -43,7 +40,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       localModel.stateModel.statuses = newStatus;
 
       emit(MiniSearchInProgress(model: localModel));
-      localModel = await _examineFile(event.name);
+      localModel = await phonesRepository.getDataFromFile(event.name);
     }
 
     if (!localModel.fileFounded) {
@@ -89,7 +86,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       localModel.stateModel.statuses = newStatus;
 
       emit(MiniSearchInProgress(model: localModel));
-      localModel = await _examineFile(event.name);
+      localModel = await phonesRepository.getDataFromFile(event.name);
     }
 
     if (!localModel.fileFounded) {
@@ -128,7 +125,7 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
       localModel.stateModel.statuses = newStatus;
 
       emit(MiniSearchInProgress(model: localModel));
-      localModel = await _examineFile(event.name);
+      localModel = await phonesRepository.getDataFromFile(event.name);
     }
 
     if (!localModel.fileFounded) {
@@ -161,9 +158,9 @@ class MiniSearchBloc extends Bloc<MiniSearchEvent, MiniSearchState> {
     final phonesWithoutDate = <String>[];
     for (var model in localModel.allPersonModels!) {
       if (model.dateOfBirth == null) {
-        final copyOfList = model.phoneNumbersList;
+        final copyOfList = Set<String>.from(model.phoneNumbersList);
         copyOfList.removeAll(regionPhonesWithoutDate);
-        phonesWithoutDate.addAll(copyOfList);
+        phonesWithoutDate.addAll(copyOfList.toList());
       }
     }
 

@@ -3,10 +3,10 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:intl/intl.dart';
 
-import 'package:godeye_parser/domain/data/data_provider/data_provider.dart';
+import 'package:godeye_parser/data/data_provider/data_provider.dart';
 import 'package:godeye_parser/domain/models/models.dart';
-import 'package:godeye_parser/repositories/abstract_phones_repository.dart';
-import 'package:godeye_parser/services/phones_service.dart';
+import 'package:godeye_parser/domain/repository/abstract_phones_repository.dart';
+import 'package:godeye_parser/data/services/services.dart';
 
 class PhonesDataRepository implements AbstractPhonesDataRepository {
   const PhonesDataRepository({
@@ -73,6 +73,7 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
         } else if (title == "Адрес:" ||
             title == "Фактический адрес:" ||
             title == "Регион проживания:" ||
+            title == "Домашинй адрес:" ||
             title == "Паспорт выдан:") {
           final data = dataMap.children[1].text.trim();
           blockModel.adress ??= data;
@@ -172,6 +173,10 @@ class PhonesDataRepository implements AbstractPhonesDataRepository {
 
     final blocksDataList =
         document.getElementsByClassName("result_search_page")[0].children;
+    if (blocksDataList.last.children[0].className == 'blockItemRep') {
+      final newBuggedList = blocksDataList.last.children.sublist(1);
+      blocksDataList.addAll(newBuggedList);
+    }
 
     final blockSummary =
         document.getElementById("menuSvodka")?.children[0].children[1];

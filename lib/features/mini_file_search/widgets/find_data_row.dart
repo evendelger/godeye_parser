@@ -11,6 +11,7 @@ class FindDataRow extends StatelessWidget {
     required this.controller,
     this.hintText,
     this.parseType,
+    this.initialValue,
   });
 
   final SearchType searchType;
@@ -18,6 +19,7 @@ class FindDataRow extends StatelessWidget {
   final TextEditingController controller;
   final String? hintText;
   final ParseType? parseType;
+  final String? initialValue;
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +30,14 @@ class FindDataRow extends StatelessWidget {
         Expanded(
           child: isRegionSearch
               ? DropDownListWidget(
+                  index: 0,
                   controller: controller,
-                  typeOfProvider: ProviderType.miniFilesSearch,
                   width: null,
                   contentPadding: const EdgeInsets.only(left: 40, bottom: 2),
                   fontSelectedSize: 18,
                   overflow: TextOverflow.ellipsis,
-                  initialValue: null,
-                  screenType: ScreenType.mini,
+                  initialValue: initialValue!.isEmpty ? null : initialValue,
+                  dataType: DataType.file,
                   fontItembuilderSize: 16,
                   height: size.height / 18 < 30 ? 30 : size.height / 18,
                 )
