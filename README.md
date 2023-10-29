@@ -1,16 +1,16 @@
 # godeye_parser
 
-A new Flutter project.
+**Приложение для парсинга html файла Telegram бота "Глаз Бога"**
 
-## Getting Started
+## Основные возможности поиска
+- Поиск номеров телефона по региону
+![Поиск по региону]('images/region.png')
+- Поиск номеров телефона по городу
+![Поиск по городу]('images/city.png')
+- Поиск конкретных людей и их номеров телефона по стажу работы(если человек - врач)
+![Поиск по стажу]('images/experience.png')
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Варианты окна поиска
+- На скриншотах выше показано малое окно поиска лишь для одного файла. Сделано было специально, чтобы, имея возможность закрепить окно, постоянно не разворачивать/сворачивать его, а делать все с максимальной скоростью и удобством.
+- Если вам необходима таблица с файлами, чтобы сохранять изменения поиска для каждого файла соответственно, то существует второе окно поиска.
+![Большое окно]('images/fullSearch.png')
